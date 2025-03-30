@@ -1,0 +1,3 @@
+# Ignorar todos los archivos dentro de la carpeta Debug y .vs
+Debug/
+.vs/
