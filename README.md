@@ -19,4 +19,4 @@ Este repositorio contiene el trabajo desarrollado para la asignatura de **Sistem
 - Rodrigo Fernández González (21090) - Monedero
 - Celia Hernández de Vergas (21142) - Lector de tarjetas
 - Juan Martínez Calvo (21200) - Atracción
-- Lucía Piqué Guillén (21247) - Lector de tarjetas
+- Lucía Piqué Guillén (21247) - Lector de tarjetas.
