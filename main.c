@@ -22,7 +22,18 @@ void setup(){
 	DDRL |= (1 << B_EN2)	
 	DDRL |= (1 << B_DI2)
 	
-	// Configurar 	
+	// Configurar interrupciones PCINT
+	PCICR |= (1 << PCIE0)
+	
+	// Habilitar mascaras sensores opticos
+	PCMSK0 |= (1 << B_SO3)
+	PCMSK0 |= (1 << B_SO4)
+	
+	// Configurar interrupcion INT0 (flanco de subida)
+	EICRA |= (1 << 2*B_SW1) | (1 << 2*B_SW1+1)
+	
+	// Habilitar mascara sensor mecanico
+	EIMSK |= (1 << B_SW1)
 	
 	// Habilitar interrupciones
 	sei();
