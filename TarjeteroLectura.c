@@ -9,7 +9,7 @@
 #include <avr/interrupt.h>
 #include <stdint.h>
 
-#define SIZE 28
+#define SIZE 64 //Hay que cambiarlo a 28
 
 volatile uint8_t vector_bit[SIZE];
 volatile uint8_t indice=0;
