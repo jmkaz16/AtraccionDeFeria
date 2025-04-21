@@ -10,6 +10,7 @@
 #include <stdint.h>
 
 #define SIZE 64 //Hay que cambiarlo a 28
+#define GLITCH 10000  //Ajustable con el osciloscopio
 
 volatile uint8_t vector_bit[SIZE];
 volatile uint8_t indice=0; //indice para recorrer el vector
@@ -23,6 +24,8 @@ volatile uint16_t t_fin_bit=0;
 
 volatile uint8_t inicio_lectura=0;
 volatile uint8_t fin_lectura=0;
+
+volatile uint16_t t_ultimo_bit=0;
 
 char tarjeta[SIZE/4+1]; //Cadena resultante de la tarjeta
 
@@ -62,7 +65,7 @@ void inicio_tarjetero() {
 	PCICR |= (1 << PCIE0);
 	
 	//Interrupcion del timer
-	DDRD &= ~(1 << PD6);
+	DDRD &= ~(1 << PD4);
 	//Activar pull-up si da error PORTD|= (1 << PD6)
 	
 	TCCR1A = 0;
@@ -92,17 +95,24 @@ ISR(TIMER1_CAPT_vect){
 		
 		uint16_t duracion_negro = t_fin_negro - t_inicio_negro;
 		uint16_t duracion_total = t_fin_bit - t_inicio_negro;
+		uint16_t t_entre_bits = t_inicio_negro - t_ultimo_bit;
 
 		// Si el pulso negro dura mas de 2/3 del total ? bit = 1, si no ? bit = 0
 		uint8_t bit = (duracion_negro * 3 > duracion_total * 2) ? 1 : 0;
 
-		if (indice < SIZE) {
-			vector_bit[indice++] = bit;
-			if(indice==SIZE){
-				fin_lectura=1;
-			}
+		//Verifica si el tiempo entre birs es razonable
+		if(t_ultimo_bit==0 || t_entre_bits < GLITCH){
+			if (indice < SIZE) {
+				vector_bit[indice++] = bit;
+				if(indice==SIZE){
+					fin_lectura=1;
+				}
+			} 
+		} else {
+			indice=0;
 		}
 		
+		t_ultimo_bit = t_inicio_negro;
 		t_inicio_negro = t_fin_bit;
 		
 		TCCR1B &= ~(1 << ICES1);
@@ -112,6 +122,7 @@ ISR(TIMER1_CAPT_vect){
 
 int main(void)
 {
+	inicio_tarjetero();
 
     /* Replace with your application code */
     while (1) 
@@ -125,6 +136,7 @@ int main(void)
 			fin_lectura=0;
 			indice=0;
 			estado=0;
+			t_ultimo_bit=0;
 		}
     }
 }
