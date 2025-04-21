@@ -52,7 +52,7 @@ volatile uint16_t t_ultimo_bit=0;
 uint8_t tarjetas_guardadas=0;
 
 
-void inicializacion() {
+void setup() {
 	cli();
 	//Configuracion del LED como salida
 	DDRL |= (1<<PL7);
