@@ -29,9 +29,15 @@ void encenderLED(){
     PORTL |= (1<<PL7);
 }
 
-ISR(TIM2_COMPA_vect){ //sucede cada 10ms
+void contador_ms(){
     contador_ms++;
 }
+
+ISR(TIM2_COMPA_vect){ //sucede cada 10ms
+    contador_ms();
+}
+
+
 
 void parpadeoLED(){
     //TOGGLE cada 50 ms
