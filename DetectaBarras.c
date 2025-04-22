@@ -1,68 +1,63 @@
+//Codigo encender LED y parpadeo LED
+
 #include <avr/io.h>
 #include <avr/interrupt.h>
-#include <stdint.h>
 
-#define GLITCH 10000
 
-volatile uint8_t estado = 0;
-volatile uint16_t t_inicio = 0;
-volatile uint16_t t_medio = 0;
-volatile uint16_t t_fin = 0;
-volatile uint16_t t_ultimo_bit = 0;
+volatile uint8_t contador=0;
 
-void setup() {
+void setup(){
+	
+	//configuro LED: puerto L pin PL7
+	DDRL|= (1<<PL7); //salida
+	PORTL &= ~(1<<PL7); //apagado al ppio
+
 	cli();
-
-	// LED en PL7 como salida
-	DDRL |= (1 << PL7);
-	PORTL &= ~(1 << PL7); // LED apagado al inicio
-
-	// PD4 como entrada para input capture
-	DDRD &= ~(1 << PD4);
-
-	// Configuración TIMER1 para input capture
-	TCCR1A = 0;
-	TCCR1B = (1 << ICES1) | (1 << CS11); // flanco subida, prescaler 8
-	TIMSK1 |= (1 << ICIE1); // Habilitar interrupción por captura
+	//Configuracion TIMER2 (led)
+	TCCR2A = (1 << WGM21);       // Modo CTC
+	TCCR2B = (1 << CS22);        // Prescaler 64 (8 MHz / 64 = 125 kHz)
+	OCR2A = 255;                // 10 ms ; 125000 / ( 1249 + 1) = 100 Hz
+	TIMSK2 |= (1 << OCIE2A);     // Habilita interrupciOn por comparacion
 
 	sei();
+
 }
 
-ISR(TIMER1_CAPT_vect) {
-	if (estado == 0) {
-		t_inicio = ICR1;
-		TCCR1B &= ~(1 << ICES1); // flanco bajada
-		estado = 1;
-		} else if (estado == 1) {
-		t_medio = ICR1;
-		TCCR1B |= (1 << ICES1); // flanco subida
-		estado = 2;
-		} else if (estado == 2) {
-		t_fin = ICR1;
-		uint16_t dur_negro = t_medio - t_inicio;
-		uint16_t dur_total = t_fin - t_inicio;
-		uint16_t entre_bits = t_inicio - t_ultimo_bit;
+void encenderLED(){
+	//Enciendo el led indefinidamente
+	PORTL |= (1<<PL7);
+}
 
-		if (t_ultimo_bit == 0 || entre_bits < GLITCH) {
-			uint8_t bit = (dur_negro * 3 > dur_total * 2) ? 1 : 0;
+void contador_ms(){
+	contador++;
+}
 
-			if (bit == 1) {
-				PORTL |= (1 << PL7);  // Encender LED
-				} else {
-				PORTL &= ~(1 << PL7); // Apagar LED
-			}
+ISR(TIMER2_COMPA_vect){ //sucede cada 2ms
+	contador_ms();
+}
+
+
+
+void parpadeoLED(){
+	//TOGGLE cada 100ms
+	if(contador >= 50){
+		if(PORTL & (1<<PL7)){ //Lee el pin y hace TOGGLE
+			PORTL &= ~(1<<PL7);
+			contador=0;
+			} else {
+			PORTL |= (1<<PL7);
+			contador=0;
 		}
-		
-		t_ultimo_bit = t_inicio;
-		t_inicio = t_fin;
-		TCCR1B &= ~(1 << ICES1); // volver a esperar flanco bajada
-		estado = 1;
 	}
+
 }
 
-int main(void) {
+int main(){
 	setup();
-	while (1) {
-		// Todo ocurre en la interrupción
+
+	while(1){
+		parpadeoLED();
 	}
+	
+
 }

@@ -61,7 +61,7 @@ void setup() {
 	//Configuracion TIMER2 (led)
 	TCCR2A = (1 << WGM21);       // Modo CTC
 	TCCR2B = (1 << CS22);        // Prescaler 64 (8 MHz / 64 = 125 kHz)
-	OCR2A = 1249;                // 10 ms ; 125000 / ( 1249 + 1) = 100 Hz
+	OCR2A = 255;                // 2ms ; 125000 / ( 1249 + 1) = 100 Hz
 	TIMSK2 |= (1 << OCIE2A);     // Habilita interrupciOn por comparacion
 
 	//Interrupcion que detecta subida o bajada de flanco, de momento no la usamos
@@ -235,8 +235,10 @@ ISR(TIMER2_COMPA_vect) {
 				if (contador_led % 10 == 0) {
 					if (PORTL & (1 << PL7)) {
 						PORTL &= ~(1 << PL7);
+						contador_led =0;
 					} else {
 						PORTL |= (1 << PL7);
+						contador_led=0;
 					}
 				} 
 			}else {

@@ -4,59 +4,60 @@
 #include <avr/interrupt.h>
 
 
-volatile uint8_t contador_ms=0;
+volatile uint8_t contador=0;
 
 void setup(){
-   
-    //configuro LED: puerto L pin PL7
-    DDRL|= (1<<PL7); //salida
-    PORTL &= ~(1<<PL7); //apagado al ppio
+	
+	//configuro LED: puerto L pin PL7
+	DDRL|= (1<<PL7); //salida
+	PORTL &= ~(1<<PL7); //apagado al ppio
 
-    cli();
+	cli();
+	//Configuracion TIMER2 (led)
+	TCCR2A = (1 << WGM21);       // Modo CTC
+	TCCR2B = (1 << CS22);        // Prescaler 64 (8 MHz / 64 = 125 kHz)
+	OCR2A = 255;                // 10 ms ; 125000 / ( 1249 + 1) = 100 Hz
+	TIMSK2 |= (1 << OCIE2A);     // Habilita interrupciOn por comparacion
 
-    //configuro TIMER
-    TCCR2A |= (1<<WGM21); //modo CTC
-    TCCR2B |= (1<<CS22); //Prescalado 64
-    OCR2A=1249; //10 ms
-    TIMSK2 |= OCIE2A; //mascara interrupcion
-
-    sei();
+	sei();
 
 }
 
 void encenderLED(){
-    //Enciendo el led indefinidamente
-    PORTL |= (1<<PL7);
+	//Enciendo el led indefinidamente
+	PORTL |= (1<<PL7);
 }
 
 void contador_ms(){
-    contador_ms++;
+	contador++;
 }
 
-ISR(TIM2_COMPA_vect){ //sucede cada 10ms
-    contador_ms();
+ISR(TIMER2_COMPA_vect){ //sucede cada 2ms
+	contador_ms();
 }
 
 
 
 void parpadeoLED(){
-    //TOGGLE cada 50 ms
-    if(contador_ms % 5 == 0){ 
-        if(PORTL & (1<<PL7)){ //Lee el pin y hace TOGGLE
-            PORTL &= ~(1<<PL7); 
-        } else {
-            PORTL |= (1<<PL7);
-        }
-    }
+	//TOGGLE cada 100ms
+	if(contador >= 50){
+		if(PORTL & (1<<PL7)){ //Lee el pin y hace TOGGLE
+			PORTL &= ~(1<<PL7);
+			contador=0;
+			} else {
+			PORTL |= (1<<PL7);
+			contador=0;
+		}
+	}
+
 }
 
 int main(){
-    setup();
-    encenderLED();
+	setup();
 
-    while(1){
-    //parpadeoLED(); 
-    }
-    
+	while(1){
+		parpadeoLED();
+	}
+	
 
 }
