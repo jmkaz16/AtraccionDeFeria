@@ -1,75 +1,76 @@
-//Codigo para guardar los bits de la tarjeta en un vector
-
 #include <avr/io.h>
 #include <avr/interrupt.h>
 #include <stdint.h>
 
-#define MAX_BITS 24 //se puede cambiar
+#define GLITCH 10000
 
-volatile uint8_t bits[MAX_BITS];
-volatile uint8_t bit_index = 0;
+volatile uint8_t flanco = 0;
+volatile uint16_t tiempos[48];  // Guarda cada instante de flanco
+volatile uint8_t flanco_index = 0;
+volatile uint8_t captura_completa = 0;
 
-volatile uint8_t estado = 0;
-volatile uint16_t t_inicio_negro = 0;
-volatile uint16_t t_fin_negro = 0;
-volatile uint16_t t_fin_bit= 0;
-
-uint8_t vector_bits[MAX_BITS/4];  // conjunto de 4 bits ya convertido a 0/1
+volatile uint8_t valores[24] = {0};
 
 void setup() {
-    cli()
-	DDRB &= ~(1 << PB0);  // ICP1 (PB0) como entrada
+	cli();
+
+	// LED en PL7 como salida
+	DDRL |= (1 << PL7);
+	PORTL &= ~(1 << PL7);
+
+	// PD4 como entrada para input capture
+	DDRD &= ~(1 << PD4);
+
+	// Configuración TIMER1
 	TCCR1A = 0;
-	TCCR1B = (1 << ICES1) | (1 << CS11);  // Subida, prescaler 8
-	TIMSK1 |= (1 << ICIE1);               // Habilita interrupcion input capture
-    sei()
+	TCCR1B = (1 << ICES1) | (1 << CS11); // Flanco de subida inicialmente, prescaler 8
+	TIMSK1 |= (1 << ICIE1); // Habilitar interrupción input capture
+
+	sei();
 }
 
 ISR(TIMER1_CAPT_vect) {
-
-	if (estado == 0) {
-		t_inicio_negro= ICR1;
-		TCCR1B &= ~(1 << ICES1);  // Esperar bajada
-		estado = 1;
+	if (flanco_index < 48) {
+		tiempos[flanco_index] = ICR1;  // Guarda el instante del flanco
+		flanco_index++;
+		TCCR1B ^= (1 << ICES1);  //parpadea el LED
+		PORTL ^= (1 << PL7);            // Cambiar flanco (subida/bajada)
 	}
-	else if (estado == 1) {
-		t_fin_negro = ICR1;
-		TCCR1B |= (1 << ICES1);  // Esperar subida
-		estado = 2;
-	}
-	else if (estado == 2) {
-		t_fin_bit = ICR1;
-
-		uint16_t duracion_negro = t_fin_negro - t_inicio_negro;
-		uint16_t duracion_bit = t_fin_bit - t_inicio_negro;
-        uint8_t bit = (duracion_negro * 3 > duracion_bit * 2) ? 1 : 0;
-
-		if (bit_index < MAX_BITS) {
-			bits[bit_index++] = bit;
-		}
-
-		estado = 0;
+	if (flanco_index >= 48) {
+		captura_completa = 1;  // Señala que ya tenemos una tarjeta leída
+		TIMSK1 &= ~(1 << ICIE1); // Desactivar interrupción para procesar tranquilo
 	}
 }
 
-void procesar_bits() {
-	for (uint8_t i = 0; i < MAX_BITS/4; i++) {
-		uint8_t val = 0;
-		for (uint8_t j = 0; j < 4; j++) {
-			val <<= 1;
-			val |= bits[i * 4 + j] & 0x01;
-		}
-		valores[i] = val;
+void procesar_tarjeta() {
+	if (!captura_completa) return;
+
+	for (uint8_t i = 0; i < 24; i++) {
+		uint16_t dur_negro = tiempos[2*i+1] - tiempos[2*i];  // tiempo entre subida-bajada
+		uint16_t dur_total = tiempos[2*i+2] - tiempos[2*i];  // tiempo total subida-subida siguiente
+
+		if (dur_total < GLITCH) continue; // ignorar glitches
+
+		valores[i] = (dur_negro * 3 > dur_total * 2) ? 1 : 0;
 	}
+
+	// Opcional: encender LED si quieres visualizarlo
+	
+	for (uint8_t i = 0; i < 24; i++) {
+		if (valores[i] == 1) PORTL |= (1 << PL7);
+		else PORTL &= ~(1 << PL7);
+	}
+
+	// Reset para próxima tarjeta
+	flanco_index = 0;
+	captura_completa = 0; //mirarlo
+	TIMSK1 |= (1 << ICIE1);  // Rehabilitar interrupción
 }
 
 int main(void) {
 	setup();
 
 	while (1) {
-		if (bit_index >= MAX_BITS) {
-			procesar_bits();
-			bit_index = 0;
-		}
+		procesar_tarjeta();
 	}
 }
