@@ -39,7 +39,10 @@ int personas = 0;  //**IMPORTANTE** Hablarla con todos, para que la usen en Inte
 long int cont_SW = 0; // contador de cuantos milisegundos lleva abierto el Switch
 long int VALOR_DE_PRUEBA = 0; // este es el numero de milisegundos que queremos que este "abierto" el Switch 2, y se medira a ojo; no deberan caer mas monedas en ese tiempo, MINIMO
 
-
+long int tLed = 0;
+long int milisNoFunciona = 0;
+bool ledEncendido = false;
+int HeEntradoEnElIf = 0;
 
 ISR(INT1_vect){
 }
@@ -155,6 +158,41 @@ void Monedero(){
 	
 }
 
+void FuncionaLed(){
+	// P_L2 |= ( 1 << B_L2);
+	// P_L2 &= ~( 1 << B_L2);
+	/*
+	milisNoFunciona=milis();
+	if (milisNoFunciona>10000){
+		// P_L2 |= ( 1 << B_L2);
+		P_L2 &= ~( 1 << B_L2);
+	} else if (milisNoFunciona>5000) {
+		P_L2 |= ( 1 << B_L2);
+		HeEntradoEnElIf = 1;
+	}
+	*/
+		milisNoFunciona=milis();
+		if ((!ledEncendido)&& ((milisNoFunciona - tLed) > 500)) {
+			P_L2 |= (1 << B_L2);      // Encender LED
+			tLed = milis();           // Guardar tiempo de encendido
+			ledEncendido = true;      // Marcar que está encendido
+		}
+		else {
+			if (milisNoFunciona - tLed > 500){ // Comprobar si han pasado 50 ms
+				P_L2 &= ~(1 << B_L2); // Apagar LED
+				ledEncendido = false; // Resetear flag para permitir otro ciclo
+				tLed = milis();
+			}
+		}
+	
+	
+}
+
+void EncenderLed(){
+	 P_L2 |= ( 1 << B_L2);
+}
+	
+
 void setup(){
 	
 	// Deshabilitar interrupciones
@@ -225,7 +263,16 @@ int main(void)
     while (1) 
     {
 		//printf("tiempo_total vale: %ld\n",tiempo_total);
-		Monedero();
+		/* Monedero(); */
+		FuncionaLed();
+		//tLed=milis();
+		//printf("tLed = %ld\n", tLed);
+		//printf("HeEntradoEnElIf = %ld\n", HeEntradoEnElIf);
+		//EncenderLed();
+		//P_L2 |= ( 1 << B_L2);
+		//P_L2 &= ~( 1 << B_L2);
     }
 }
 
+// HASTA AHORA:
+// FUNCIONA MILIS() PERO TENGO QUE ACCEDER A ELLO A TRAVES DE UNA VARIABLE (RARO)
