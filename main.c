@@ -44,8 +44,7 @@ long int milisNoFunciona = 0;
 bool ledEncendido = false;
 int HeEntradoEnElIf = 0;
 
-ISR(INT1_vect){
-}
+long int OverflowsTimers = 0;
 
 void suma1aMilis(){
 	tiempo_total++;
@@ -58,6 +57,79 @@ long int milis(){
 ISR(TIMER3_COMPA_vect){
 	suma1aMilis();
 }
+
+ISR(INT1_vect){
+}
+
+ISR(TIMER4_CAPT_vect){
+	OverflowsTimers=0;
+	tA_aux = ICR4;
+}
+
+ISR(TIMER5_CAPT_vect){
+	// tB_aux = ICR5; pero con algun if
+	
+	// CALCULAR tA
+	// Cambiar a que se active la ISR por flanco de Subida
+	// recalcular r y demas...
+	
+	if (SO3_flanco==0){
+		// calculo tA
+		// hay que mirar si esto funciona bien; igual que nos pasa con "milis()"
+		if (OverflowsTimers==0){
+			tA = (ICR5 - tA_aux);
+		}
+		else {
+			tA = (65536 - tA_aux) + ICR5 + 65536*(OverflowsTimers-1);
+		}
+		tB_aux = ICR5;
+		SO3_flanco = 1;
+		TCCR5B |= (1 << ICES5); // Cambiar a que se active la ISR por flanco de Subida
+		OverflowsTimers = 0;
+	}
+	else {
+		SO3_flanco = 0;
+		if (OverflowsTimers==0){
+			tB = (ICR5 - tB_aux);
+		}
+		else {
+			tB = (65536 - tB_aux) + ICR5 + 65536*(OverflowsTimers-1);
+		}
+		TCCR5B &= ~(1 << ICES5); // Cambiar a que se active la ISR por flanco de Bajada
+		r=(double)tB/(double)tA;
+		
+		if ((r>1) && (r<1.1)){ // 1<r<1.1
+			dinero=dinero+1;
+			valido=1;
+		}
+		
+		else if ((r>1.15) && (r<1.25)){ // 1.15<r<1.25
+			dinero=dinero+0.5;
+			valido=1;
+		}
+		
+		else if ((r>0.85) && (r<0.95)){ // 0.85<r<0.95
+			dinero=dinero+0.2;
+			valido=1;
+		}
+		
+		else if ((r>0.65) && (r<0.75)){ // 0.65<r<0.75
+			dinero=dinero+0.1;
+			valido=1;
+		}
+		
+		else {
+			valido=0;
+		}
+	}
+	
+}
+
+ISR(TIMER4_COMPA_vect){
+	OverflowsTimers++;
+}
+
+/*
 
 void interrupcion_SO2(){
 	if (SO2_flanco==0){
@@ -106,6 +178,9 @@ void interrupcion_SO3(){
 	}
 }
 
+*/
+
+/*
 void compruebaPCINT0(){
 	//if (bit2dePCINT0!=PORTB(0))
 	// (Valor_PINB & (1 << B_SO2)) >> B_SO2
@@ -119,10 +194,13 @@ void compruebaPCINT0(){
 	
 	Valor_PINB = PINB;
 }
-	
+*/	
+
+/*
 ISR(PCINT0_vect){
 	compruebaPCINT0();
 }
+*/
 
 void Monedero(){
 	if (dinero >= 1.20){
@@ -141,17 +219,17 @@ void Monedero(){
 		}
 	}
 	if (valido==1){
-		P_EN1 |= ( 1 << B_EN1); // habilitar en_M1 = 1
-		if ((((PIND & (1 << B_EN1)) >> B_EN1))==1){
-			P_EN1 &= ~( 1 << B_EN1); // deshabilitar en_M1 = 0
+		P_BK1 &= ~( 1 << B_BK1); // habilitar motor poniendo a 0 el freno
+		if ((((PIND & (1 << B_SW2)) >> B_SW2))==1){
+			P_BK1 |= ( 1 << B_BK1); // deshabilitar motor poniendo a 1 el freno
 			cont_SW = milis();
 			valido = 0;
 		}
 	}
 	if (cont_SW - milis () > VALOR_DE_PRUEBA ) {// Este valor habra que medirlo "a ojo"
-		P_EN1 |= ( 1 << B_EN1); // habilitar en_M1 = 1
+		P_BK1 &= ~( 1 << B_BK1); // habilitar motor poniendo a 0 el freno
 		if ((((PIND & (1 << B_EN1)) >> B_EN1))==0){
-			P_EN1 &= ~( 1 << B_EN1); // deshabilitar en_M1 = 0
+			P_BK1 |= ( 1 << B_BK1); // deshabilitar motor poniendo a 1 el freno
 			cont_SW = 0;
 		}
 	}
@@ -191,6 +269,23 @@ void FuncionaLed(){
 void EncenderLed(){
 	 P_L2 |= ( 1 << B_L2);
 }
+
+void FuncionaMotor(){ //int tiempo_motor = 0;
+
+//tiempo_motor = milis();
+
+//((Valor_PINB & (1 << B_SO2)) >> B_SO2)
+// ((PIN_SW2 >> B_SW2) & 1) == 1
+	if((((PIN_SW2 >> B_SW2) & 1) == 0) /*|| (tiempo_motor - 2000 > 0)*/ ){
+		P_BK1 |= ( 1 << B_BK1);
+		P_L2 &= ~(1 << B_L2);
+	} else {
+		P_BK1 &= ~( 1 << B_BK1);
+		P_L2 |= (1 << B_L2);
+		
+	}
+	
+}
 	
 
 void setup(){
@@ -213,6 +308,10 @@ void setup(){
 	DDRL |= (1 << B_BK1);
 	
 	// Activamos el freno dinamico, ya que en todo el transcurso esta encendido; nunca se apaga
+	//P_BK1 |= (1 << B_BK1);
+	//Activamos el ENABLE, ya que en todo el transcurso esta encendido; nunca se apaga
+	P_EN1 |= (1 << B_EN1);
+	//Inicializamos a 1 el freno dinamico
 	P_BK1 |= (1 << B_BK1);
 	
 	// Configurar interrupciones PCINT
@@ -236,22 +335,56 @@ void setup(){
 	TCCR3B |= (1 << WGM32);
 	TCCR3B &= ~(1 << WGM33);
 	
+	// Timer 4 y 5 tambien en modo CTC (Top OCRnA)
+	TCCR4A &= ~(1 << WGM40);
+	TCCR4A &= ~(1 << WGM41);
+	TCCR4B |= (1 << WGM42);
+	TCCR4B &= ~(1 << WGM43);
+	
+	TCCR5A &= ~(1 << WGM50);
+	TCCR5A &= ~(1 << WGM51);
+	TCCR5B |= (1 << WGM52);
+	TCCR5B &= ~(1 << WGM53);
+	
 	// Mascara para no tener preescalado 
 	TCCR3B = (TCCR3B | (1 << CS30));
 	TCCR3B = (TCCR3B & (~(1 << CS31)));
 	TCCR3B = (TCCR3B & (~(1 << CS32)));
 	
+	// Mascara para no tener preescalado tampoco en los timers 4 y 5 
+	TCCR4B = (TCCR4B | (1 << CS40));
+	TCCR4B = (TCCR4B & (~(1 << CS41)));
+	TCCR4B = (TCCR4B & (~(1 << CS42)));
+	
+	TCCR5B = (TCCR5B | (1 << CS50));
+	TCCR5B = (TCCR5B & (~(1 << CS51)));
+	TCCR5B = (TCCR5B & (~(1 << CS52)));
+	
 	// Sera el TOP, y vale 8000 porque 125ns*8000=1ms (para la funcion "milis()" )
 	OCR3A = 8000; // **puede que de problema por "perdida de precision", tener cuidado
 	//IGUAL HAY QUE USAR "input capture"...
 	
+	OCR4A = 65535;
+	OCR5A = 65535;
 	 // Configuramos la interrupción por OCRA
 	 
 	 // ****DUDA****
-	 // ASEGURARNOS DE QUE ES "OCIE3A", ¿por qué "A"? ¿es porque estamos usando ocrA? )
-	TIMSK3 = (1 << OCIE3A);
+	 // ASEGURARNOS DE QUE ES "OCIE3A", ¿por que "A"? ¿es porque estamos usando ocrA? )
+	TIMSK3 |= (1 << OCIE3A);
 	
+	TIMSK4 |= (1 << OCIE4A);
+	TIMSK5 |= (1 << OCIE5A);
 	// Habilitar interrupciones
+	
+	// habilitar input capture e inicializar 
+	
+	TCCR4B &= ~(1 << ICES4); // pongo un 0, es decir, se activa ante flanco de bajada
+	TCCR5B &= ~(1 << ICES5); // PUEDE QUE SEA ALREVES, HAY QUE MIRARLO
+	
+	// mascara del ISR
+	TIMSK4 |= (1 << ICIE4);
+	TIMSK5 |= (1 << ICIE5);
+	
 	sei();
 }
 
@@ -264,7 +397,8 @@ int main(void)
     {
 		//printf("tiempo_total vale: %ld\n",tiempo_total);
 		/* Monedero(); */
-		FuncionaLed();
+		//FuncionaLed();
+		FuncionaMotor();		
 		//tLed=milis();
 		//printf("tLed = %ld\n", tLed);
 		//printf("HeEntradoEnElIf = %ld\n", HeEntradoEnElIf);
@@ -276,3 +410,5 @@ int main(void)
 
 // HASTA AHORA:
 // FUNCIONA MILIS() PERO TENGO QUE ACCEDER A ELLO A TRAVES DE UNA VARIABLE (RARO)
+
+// MODIFICACION: AHORA SIEMPRE ACTIVO EL "ENABLE", CUANDO QUIERO QUE SE MUEVA EL MOTOR, APAGO EL BK; CUANDO QUIERO QUE SE PARE EL MOTOR, ENCIENDO BK

@@ -10,14 +10,15 @@
 #define B_BK1 6
 
 // Puertos y bits de los sensores opticos
-#define P_SO2 PORTB
-#define B_SO2 2
-#define P_SO3 PORTB
-#define B_SO3 3
+#define P_SO2 PORTL
+#define B_SO2 0
+#define P_SO3 PORTL
+#define B_SO3 1
 
 // Puertos y bits de los sensores mecanicos
 #define P_SW2 PORTD
 #define B_SW2 1
+#define PIN_SW2 PIND
 
 // Puertos y bits de los LEDs
 #define P_L2 PORTL
