@@ -13,6 +13,8 @@
 
 //Otros
 
+//holaaaa :)
+
 #define SIZE 64 //Hay que cambiarlo a 28
 #define GLITCH 10000  //Ajustable con el osciloscopio
 #define NUM_CARACTERES 7
@@ -253,7 +255,7 @@ ISR(TIMER2_COMPA_vect) {
 
 int main(void)
 {
-	inicio_tarjetero();
+	setup();
 
     /* Replace with your application code */
     while (1) 
