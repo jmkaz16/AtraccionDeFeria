@@ -8,10 +8,10 @@
 #define B_DI2 3
 
 // Puertos y bits de los sensores opticos
-#define P_SO3 PORTB
-#define B_SO3 0
-#define P_SO4 PORTB
-#define B_SO4 1
+#define P_SO4 PORTD
+#define B_SO4 2
+#define P_SO5 PORTD
+#define B_SO5 3
 
 // Puertos y bits de los sensores mecanicos
 #define P_SW1 PORTD

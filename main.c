@@ -53,18 +53,19 @@ void setup() {
     DDRK |= (1 << B_EN2);
     DDRK |= (1 << B_DI2);
 
-    // Configurar interrupciones PCINT
-    PCICR |= (1 << PCIE0);
-
-    // Habilitar mascaras sensores opticos
-    PCMSK0 |= (1 << B_SO3);
-    PCMSK0 |= (1 << B_SO4);
-
     // Configurar interrupcion INT0 (flanco de subida)
     EICRA |= (1 << 2 * B_SW1) | (1 << (2 * B_SW1 + 1));
 
     // Habilitar mascara sensor mecanico
     EIMSK |= (1 << B_SW1);
+
+    // Configurar interrupcion INT2 e INT3 (flanco de subida)
+    EICRA |= (1 << 2 * B_SO4) | (1 << (2 * B_SO4 + 1));
+    EICRA |= (1 << 2 * B_SO5) | (1 << (2 * B_SO5 + 1));
+
+    // Habilitar mascara sensores opticos
+    EIMSK |= (1 << B_SO4);
+    EIMSK |= (1 << B_SO5);
 
     // Timer 4 en modo CTC (Top OCRnA)
     TCCR4A &= ~(1 << WGM40);
