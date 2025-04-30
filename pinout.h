@@ -16,6 +16,8 @@
 // Puertos y bits de los sensores mecanicos
 #define P_SW1 PORTD
 #define B_SW1 0
+#define P_SW3 PORTK
+#define B_SW3 4
 
 // Puertos y bits de los LEDs
 #define P_L3 PORTK
