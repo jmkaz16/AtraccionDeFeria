@@ -12,39 +12,43 @@
 #include <avr/interrupt.h>
 #include "pinout.h"
 
-long int tiempo_total=0; // guarda el tiempo total desde el reset para que milis() acceda a ella
+volatile long int tiempo_total=0; // guarda el tiempo total desde el reset para que milis() acceda a ella
 
 uint8_t Valor_PINB=0b00000000; // "valor previo" del PINB 
 
 // Variables para la interrupcion del SO_2 (es importante que sean globales)
-long int tA_aux=0; // variable intermedia para ayudar a calcular tA
-bool SO2_flanco=0; // me dice si estoy en un flanco "par" o "impar"
+volatile long int tA_aux=0; // variable intermedia para ayudar a calcular tA
+volatile bool SO2_flanco=0; // me dice si estoy en un flanco "par" o "impar"
 
 // Variables para la interrupcion del SO_3 (es importante que sean globales)
-long int tB_aux=0; // variable intermedia para ayudar a calcular tA
-bool SO3_flanco=0; // me dice si estoy en un flanco "par" o "impar"
+volatile long int tB_aux=0; // variable intermedia para ayudar a calcular tA
+volatile bool SO3_flanco=false; // me dice si estoy en un flanco "par" o "impar"
 
-long int tA=0;
-long int tB=0;
-double r = 0;
+volatile long int tA=0;
+volatile long int tB=0;
+volatile double r = 0;
 
-float dinero = 0; // guardamos el valor actualizado de ESA persona pagando (se reinicia al validar a ESA persona)
-bool valido = 0;  // si la moneda que entra esta en un rango aceptable de "r", valido valdra "1"; "0" en caso contrario
+volatile float dinero = 0; // guardamos el valor actualizado de ESA persona pagando (se reinicia al validar a ESA persona)
+volatile bool valido = 0;  // si la moneda que entra esta en un rango aceptable de "r", valido valdra "1"; "0" en caso contrario
 
 // Variables del "monedero" main
-long int T_L2 = 0; // temporizador auxiliar para ver cuanto tiempo lleva encendido el led L2, ya que queremos que este encendido solo 1000 ms
-bool L2_en = 0;    // similar a "SO2_flanco": es una "bandera"
-int personas = 0;  //**IMPORTANTE** Hablarla con todos, para que la usen en Integracion
+volatile long int T_L2 = 0; // temporizador auxiliar para ver cuanto tiempo lleva encendido el led L2, ya que queremos que este encendido solo 1000 ms
+volatile bool L2_en = 0;    // similar a "SO2_flanco": es una "bandera"
+volatile int personas = 0;  //**IMPORTANTE** Hablarla con todos, para que la usen en Integracion
 
-long int cont_SW = 0; // contador de cuantos milisegundos lleva abierto el Switch
-long int VALOR_DE_PRUEBA = 0; // este es el numero de milisegundos que queremos que este "abierto" el Switch 2, y se medira a ojo; no deberan caer mas monedas en ese tiempo, MINIMO
+volatile long int cont_SW = 0; // contador de cuantos milisegundos lleva abierto el Switch
+volatile long int VALOR_DE_PRUEBA = 0; // este es el numero de milisegundos que queremos que este "abierto" el Switch 2, y se medira a ojo; no deberan caer mas monedas en ese tiempo, MINIMO
 
-long int tLed = 0;
-long int milisNoFunciona = 0;
-bool ledEncendido = false;
-int HeEntradoEnElIf = 0;
+volatile long int tLed = 0;
+volatile long int milisNoFunciona = 0;
+volatile bool ledEncendido = false;
+volatile int HeEntradoEnElIf = 0;
 
-long int OverflowsTimers = 0;
+volatile long int OverflowsTimers = 0;
+
+volatile bool bandera_SW = 0;
+volatile long int MilisNoFuncionaDelSwitch = 0;
+volatile int ciclo = 0;
 
 void suma1aMilis(){
 	tiempo_total++;
@@ -59,23 +63,31 @@ ISR(TIMER3_COMPA_vect){
 }
 
 ISR(INT1_vect){
+	P_BK1 |= ( 1 << B_BK1);
+	cont_SW=milis();
+	bandera_SW = 1; // ***REVISAR***
 }
 
 ISR(TIMER4_CAPT_vect){
+	//P_L2 |= ( 1 << B_L2);
+	
 	OverflowsTimers=0;
 	tA_aux = ICR4;
+	
 }
 
 ISR(TIMER5_CAPT_vect){
-	// tB_aux = ICR5; pero con algun if
 	
-	// CALCULAR tA
-	// Cambiar a que se active la ISR por flanco de Subida
-	// recalcular r y demas...
+	//P_L2 &= ~( 1 << B_L2);
 	
-	if (SO3_flanco==0){
-		// calculo tA
+	
+	if (SO3_flanco==false){
+		
+		//P_L2 |= ( 1 << B_L2);
+		
 		// hay que mirar si esto funciona bien; igual que nos pasa con "milis()"
+		
+		/*
 		if (OverflowsTimers==0){
 			tA = (ICR5 - tA_aux);
 		}
@@ -83,19 +95,35 @@ ISR(TIMER5_CAPT_vect){
 			tA = (65536 - tA_aux) + ICR5 + 65536*(OverflowsTimers-1);
 		}
 		tB_aux = ICR5;
-		SO3_flanco = 1;
+		*/
+		SO3_flanco = true;
+		P_L2 |= ( 1 << B_L2);
+		
+		TIMSK5 &= ~(1 << ICIE5);
 		TCCR5B |= (1 << ICES5); // Cambiar a que se active la ISR por flanco de Subida
+		TIMSK5 |= (1 << ICIE5);
+		
 		OverflowsTimers = 0;
 	}
-	else {
-		SO3_flanco = 0;
+	
+	if (SO3_flanco == true) {
+		
+		P_L2 &= ~( 1 << B_L2);
+		
+		SO3_flanco = false;
+		
+		
 		if (OverflowsTimers==0){
 			tB = (ICR5 - tB_aux);
 		}
 		else {
 			tB = (65536 - tB_aux) + ICR5 + 65536*(OverflowsTimers-1);
 		}
+		TIMSK5 &= ~(1 << ICIE5);
 		TCCR5B &= ~(1 << ICES5); // Cambiar a que se active la ISR por flanco de Bajada
+		TIMSK5 |= (1 << ICIE5);
+		
+		
 		r=(double)tB/(double)tA;
 		
 		if ((r>1) && (r<1.1)){ // 1<r<1.1
@@ -121,6 +149,7 @@ ISR(TIMER5_CAPT_vect){
 		else {
 			valido=0;
 		}
+		
 	}
 	
 }
@@ -218,6 +247,9 @@ void Monedero(){
 			L2_en = 0;
 		}
 	}
+	
+	// FORMA ANTERIOR, CON CONSULTA PERIODICA
+	/* 
 	if (valido==1){
 		P_BK1 &= ~( 1 << B_BK1); // habilitar motor poniendo a 0 el freno
 		if ((((PIND & (1 << B_SW2)) >> B_SW2))==1){
@@ -233,12 +265,25 @@ void Monedero(){
 			cont_SW = 0;
 		}
 	}
+	*/
+	MilisNoFuncionaDelSwitch = milis();
+	if ((((PIN_SW2 >> B_SW2) & 1) == 1)  && (MilisNoFuncionaDelSwitch-cont_SW>1000)){
+		P_BK1 &= ~( 1 << B_BK1);	
+	}
+	
+	if ((((PIN_SW2 >> B_SW2) & 1) == 0) & bandera_SW==1 ) { //REVISAR SI ASI MIRO SI YA SE HA DESACTIVADO el switch Y VER SI PONER UN TIEMPO PARA DEJAR QUE SE FRENE
+		// FALTA AÑADIR ALGO DEL TIPO "&& X-MILIS()>TIEMPO_QUE_QUIERO_QUE_ESTE_ABIERTO/CERRADO"
+		P_BK1 |=( 1 << B_BK1); // deshabilitar motor poniendo a 1 el freno
+	}
 	
 }
 
 void FuncionaLed(){
-	// P_L2 |= ( 1 << B_L2);
-	// P_L2 &= ~( 1 << B_L2);
+	P_L2 |= ( 1 << B_L2);
+	P_L2 |= ( 1 << B_L2);
+	P_L2 |= ( 1 << B_L2);
+	P_L2 |= ( 1 << B_L2);
+	//P_L2 &= ~( 1 << B_L2);
 	/*
 	milisNoFunciona=milis();
 	if (milisNoFunciona>10000){
@@ -249,6 +294,7 @@ void FuncionaLed(){
 		HeEntradoEnElIf = 1;
 	}
 	*/
+	/*
 		milisNoFunciona=milis();
 		if ((!ledEncendido)&& ((milisNoFunciona - tLed) > 500)) {
 			P_L2 |= (1 << B_L2);      // Encender LED
@@ -262,12 +308,13 @@ void FuncionaLed(){
 				tLed = milis();
 			}
 		}
-	
+	*/
 	
 }
 
 void EncenderLed(){
 	 P_L2 |= ( 1 << B_L2);
+	 //P_L2 &= ~( 1 << B_L2);
 }
 
 void FuncionaMotor(){ //int tiempo_motor = 0;
@@ -297,8 +344,11 @@ void setup(){
 	DDRL |= (1 << B_L2);
 	
 	// Configurar Sensores Opticos como Entradas ( "0" )
-	DDRB &= ~(1 << B_SO2);
-	DDRB &= ~(1 << B_SO3);
+	//DDRB &= ~(1 << B_SO2);
+	//DDRB &= ~(1 << B_SO3);
+	
+	DDRL &= ~(1 << B_SO2);
+	DDRL &= ~(1 << B_SO3);
 	
 	// Me guardo el estado de los puertos
 	Valor_PINB = PINB; // (me interesan B_SO2, B_SO3)
@@ -385,6 +435,15 @@ void setup(){
 	TIMSK4 |= (1 << ICIE4);
 	TIMSK5 |= (1 << ICIE5);
 	
+	
+	//P_L2 &= ~( 1 << B_L2); // inicio con el led apagado
+	
+	// configurar interrupcion int 1 para que detecte por flanco de subida
+	
+	EICRA|=(1<<ISC11);
+	EICRA|=(1<<ISC10);
+	EIMSK|=(1<<INT1);
+	
 	sei();
 }
 
@@ -398,14 +457,16 @@ int main(void)
 		//printf("tiempo_total vale: %ld\n",tiempo_total);
 		/* Monedero(); */
 		//FuncionaLed();
-		FuncionaMotor();		
+		//FuncionaMotor();		
 		//tLed=milis();
 		//printf("tLed = %ld\n", tLed);
 		//printf("HeEntradoEnElIf = %ld\n", HeEntradoEnElIf);
 		//EncenderLed();
 		//P_L2 |= ( 1 << B_L2);
 		//P_L2 &= ~( 1 << B_L2);
+		ciclo++;
     }
+	
 }
 
 // HASTA AHORA:
