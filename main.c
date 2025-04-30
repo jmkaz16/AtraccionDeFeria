@@ -10,6 +10,7 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <time.h>
+#include <stdbool.h>
 
 #include "pinout.h"
 
@@ -33,7 +34,7 @@ bool atraccion_flag = false;         // Bandera de movimiento de la atraccion
 uint16_t t_atraccion = 0;            // Tiempo de duracion de la atraccion en decimas de segundo
 uint16_t t_atraccion_max = 20 * 60;  // Tiempo maximo de duracion de la atraccion en decimas de segundo
 uint16_t t_atraccion_min = 300;      // Tiempo minimo de duracion de la atraccion en decimas de segundo
-volatile atraccion_cnt = 0;          // Contador de duracion de la atraccion en decimas de segundo
+volatile uint16_t atraccion_cnt = 0;          // Contador de duracion de la atraccion en decimas de segundo
 
 volatile uint16_t dientes_cnt = 0;   // Contador de dientes del engranaje
 volatile uint16_t t_subida_cnt = 0;  // Contador de tiempo de subida en milisegundos
@@ -43,10 +44,69 @@ uint16_t t_dientes = 2;              // Tiempo por diente en milisegundos
 
 volatile bool emergencia_flag = false;  // Bandera de emergencia
 
+// Configurar tiempos de parpadeo en ms (Prinmero porq se llama luego)
+void setParpadeo(uint16_t t_encendido_ms, uint16_t t_total_ms) {
+	t_encendido = t_encendido_ms / 100;  // Convertir a decimas de segundo
+	t_total = t_total_ms / 100;          // Convertir a decimas de segundo
+	parpadeo_cnt = 0;
+}
+
+// Parpadeo del LED 4
+void parpadeo() {
+	if (parpadeo_cnt < t_total) {
+		if (parpadeo_cnt < t_encendido) {
+			setBit(P_L4, B_L4);  // Encender LED 4
+			} else {
+			clrBit(P_L4, B_L4);  // Apagar LED 4
+		}
+		} else {
+		parpadeo_cnt = 0;
+	}
+}
+
+// Activar la atraccion
+void setAtraccion() {
+	t_atraccion = (rand() % (t_atraccion_max - t_atraccion_min)) + t_atraccion_min;  // Tiempo de duracion de la atraccion
+	t_subida = t_subida_min;                                                         // Reiniciar tiempo de subida
+	atraccion_flag = true;                                                           // Activar bandera de movimiento de la atraccion
+	setParpadeo(500, 500);                                                           // Mantener el LED 4 encendido
+	cli();                                                                           // Deshabilitar interrupciones globales
+	TIMSK0 |= (1 << OCIE0A);                                                         // Habilitar interrupcion por OCRA
+	EIMSK |= (1 << B_SO4) | (1 << B_SO5);                                            // Habilitar mascara de interrupcion por sensores opticos
+	sei();                                                                           // Habilitar interrupciones globales
+}
+
+// Desactivar la atraccion
+void clrAtraccion() {
+	clrBit(P_EN2, B_EN2);                     // Apagar motor
+	TIMSK0 &= ~(1 << OCIE0A);                 // Deshabilitar interrupcion por OCRA del Timer 0
+	EIMSK &= ~((1 << B_SO4) | (1 << B_SO5));  // Deshabilitar mascara de interrupcion por sensores opticos
+	atraccion_flag = false;                   // Desactivar bandera de movimiento de la atraccion
+	atraccion_cnt = 0;                        // Reiniciar contador de duracion de la atraccion
+	setParpadeo(500, 10000);                  // Encender 500ms y apagar 10000ms
+}
+
+// Mover la atraccion
+void moverAtraccion() {
+	if (atraccion_flag) {
+		setBit(P_EN2, B_EN2);  // Encender motor
+		if (t_subida_cnt >= t_subida) {
+			PINK |= (1 << B_DI2);                 // Cambiar sentido de giro del motor (hace toggle)
+			t_subida += dientes_cnt * t_dientes;  // Incrementar tiempo de subida
+			cli();                                // Deshabilitar interrupciones globales
+			TIMSK0 &= ~(1 << OCIE0A);             // Deshabilitar interrupcion por OCRA del Timer 0
+			EIMSK &= ~(1 << B_SO4);               // Deshabilitar mascara de interrupcion para el sensor optico 4 (dientes)
+			sei();                                // Habilitar interrupciones globales
+			dientes_cnt = 0;                      // Reiniciar contador de dientes
+			t_subida_cnt = 0;                     // Reiniciar contador de tiempo de subida
+		}
+	}
+}
+
 // ISR del pulsador de emergencia (INT0)
 ISR(INT0_vect) {
     setParpadeo(200, 1000);                                  // Encender 200ms y apagar 1000ms
-    TISMK &= ~(1 << OCIE0A);                                 // Deshabilitar interrupcion por OCRA del Timer 0
+    TIMSK0 &= ~(1 << OCIE0A);                                 // Deshabilitar interrupcion por OCRA del Timer 0
     EIMSK &= ~((1 << B_SO4) | (1 << B_SO5) | (1 << B_SW1));  // Deshabilitar mascara de interrupcion por sensores opticos y mecanico
     emergencia_flag = true;                                  // Activar bandera de emergencia
 }
@@ -81,64 +141,6 @@ ISR(TIMER4_COMPA_vect) {
         atraccion_cnt++;
     }
 }
-
-// Configurar tiempos de parpadeo en ms
-void setParpadeo(uint16_t t_encendido_ms, uint16_t t_total_ms) {
-    t_encendido = t_encendido_ms / 100;  // Convertir a decimas de segundo
-    t_total = t_total_ms / 100;          // Convertir a decimas de segundo
-    parpadeo_cnt = 0;
-}
-
-// Parpadeo del LED 4
-void parpadeo() {
-    if (parpadeo_cnt < t_total) {
-        if (parpadeo_cnt < t_encendido) {
-            setBit(P_L4, B_L4);  // Encender LED 4
-        } else {
-            clrBit(P_L4, B_L4);  // Apagar LED 4
-        }
-    } else {
-        parpadeo_cnt = 0;
-    }
-}
-
-// Activar la atraccion
-void setAtraccion() {
-    t_atraccion = (rand() % (t_atraccion_max - t_atraccion_min)) + t_atraccion_min;  // Tiempo de duracion de la atraccion
-    t_subida = t_subida_min;                                                         // Reiniciar tiempo de subida
-    atraccion_flag = true;                                                           // Activar bandera de movimiento de la atraccion
-    setParpadeo(500, 500);                                                           // Mantener el LED 4 encendido
-    cei();                                                                           // Deshabilitar interrupciones globales
-    TIMSK0 |= (1 << OCIE0A);                                                         // Habilitar interrupcion por OCRA
-    EIMSK |= (1 << B_SO4) | (1 << B_SO5);                                            // Habilitar mascara de interrupcion por sensores opticos
-    sei();                                                                           // Habilitar interrupciones globales
-}
-
-// Desactivar la atraccion
-void clrAtraccion() {
-    clrBit(P_EN2, B_EN2);                     // Apagar motor
-    TIMSK0 &= ~(1 << OCIE0A);                 // Deshabilitar interrupcion por OCRA del Timer 0
-    EIMSK &= ~((1 << B_SO4) | (1 << B_SO5));  // Deshabilitar mascara de interrupcion por sensores opticos
-    atraccion_flag = false;                   // Desactivar bandera de movimiento de la atraccion
-    atraccion_cnt = 0;                        // Reiniciar contador de duracion de la atraccion
-    setParpadeo(500, 10000);                  // Encender 500ms y apagar 10000ms
-}
-
-// Mover la atraccion
-void moverAtraccion() {
-    if (atraccion_flag) {
-        setBit(P_EN2, B_EN2);  // Encender motor
-        if (t_subida_cnt >= t_subida) {
-            PINK |= (1 << B_DI2);                 // Cambiar sentido de giro del motor (hace toggle)
-            t_subida += dientes_cnt * t_dientes;  // Incrementar tiempo de subida
-            cei();                                // Deshabilitar interrupciones globales
-            TIMSK0 &= ~(1 << OCIE0A);             // Deshabilitar interrupcion por OCRA del Timer 0
-            EIMSK &= ~(1 << B_SO4);               // Deshabilitar mascara de interrupcion para el sensor optico 4 (dientes)
-            sei();                                // Habilitar interrupciones globales
-            dientes_cnt = 0;                      // Reiniciar contador de dientes
-            t_subida_cnt = 0;                     // Reiniciar contador de tiempo de subida
-        }
-    }
 
     void setup() {
         // Deshabilitar interrupciones
@@ -208,7 +210,6 @@ void moverAtraccion() {
 
     int main(void) {
         setup();                 // Configuracion inicial
-        setParpadeo(500, 1000);  // Encender 500ms y apagar 10000ms
         while (1) {
             if (!emergencia_flag) {
                 if (personas_cnt >= personas_max) {
