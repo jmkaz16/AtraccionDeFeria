@@ -26,9 +26,11 @@ volatile uint16_t parpadeo_cnt = 0;  // Contador de parpadeo en decimas de segun
 volatile uint16_t personas_cnt = 0;  // Contador de personas en la atraccion
 uint8_t personas_max = 4;            // Maximo de personas en la atraccion
 
-volatile uint16_t t_sw3_cnt = 0;       // Contador de tiempo para antirrebotes del sw3 en decimas de segundo
+volatile uint16_t t_sw3_cnt = 0;  // Contador de tiempo para antirrebotes del sw3 en decimas de segundo
 volatile uint8_t estado_sw3 = 1;
 volatile uint8_t last_estado_sw3 = 1;  // Variable para almacenar el estado anterior del sensor mecanico SW3
+
+volatile uint16_t t_s04_cnt = 0;  // Contador de tiempo para el sensor optico 4 en milisegundos
 
 bool espera_flag = false;          // Bandera de contador de espera´
 uint16_t t_espera = 100;           // Tiempo de espera en decimas de segundo
@@ -75,15 +77,15 @@ void setAtraccion() {
     atraccion_flag = true;                                                           // Activar bandera de movimiento de la atraccion
     setParpadeo(500, 500);                                                           // Mantener el LED 4 encendido
     cli();                                                                           // Deshabilitar interrupciones globales
-    TIMSK0 |= (1 << OCIE0A);                                                         // Habilitar interrupcion por OCRA
-    EIMSK |= (1 << B_SO4) | (1 << B_SO5);                                            // Habilitar mascara de interrupcion por sensores opticos
-    sei();                                                                           // Habilitar interrupciones globales
+    // TIMSK0 |= (1 << OCIE0A);                                                         // Habilitar interrupcion por OCRA
+    EIMSK |= (1 << B_SO4) | (1 << B_SO5);  // Habilitar mascara de interrupcion por sensores opticos
+    sei();                                 // Habilitar interrupciones globales
 }
 
 // Desactivar la atraccion
 void clrAtraccion() {
-    clrBit(P_EN2, B_EN2);                     // Apagar motor
-    TIMSK0 &= ~(1 << OCIE0A);                 // Deshabilitar interrupcion por OCRA del Timer 0
+    clrBit(P_EN2, B_EN2);  // Apagar motor
+    // TIMSK0 &= ~(1 << OCIE0A);                 // Deshabilitar interrupcion por OCRA del Timer 0
     EIMSK &= ~((1 << B_SO4) | (1 << B_SO5));  // Deshabilitar mascara de interrupcion por sensores opticos
     atraccion_flag = false;                   // Desactivar bandera de movimiento de la atraccion
     atraccion_cnt = 0;                        // Reiniciar contador de duracion de la atraccion
@@ -98,26 +100,29 @@ void moverAtraccion() {
             PINK |= (1 << B_DI2);                 // Cambiar sentido de giro del motor (hace toggle)
             t_subida += dientes_cnt * t_dientes;  // Incrementar tiempo de subida
             cli();                                // Deshabilitar interrupciones globales
-            TIMSK0 &= ~(1 << OCIE0A);             // Deshabilitar interrupcion por OCRA del Timer 0
-            EIMSK &= ~(1 << B_SO4);               // Deshabilitar mascara de interrupcion para el sensor optico 4 (dientes)
-            sei();                                // Habilitar interrupciones globales
-            dientes_cnt = 0;                      // Reiniciar contador de dientes
-            t_subida_cnt = 0;                     // Reiniciar contador de tiempo de subida
+            // TIMSK0 &= ~(1 << OCIE0A);             // Deshabilitar interrupcion por OCRA del Timer 0
+            EIMSK &= ~(1 << B_SO4);  // Deshabilitar mascara de interrupcion para el sensor optico 4 (dientes)
+            sei();                   // Habilitar interrupciones globales
+            dientes_cnt = 0;         // Reiniciar contador de dientes
+            t_subida_cnt = 0;        // Reiniciar contador de tiempo de subida
         }
     }
 }
 
 // ISR del pulsador de emergencia SW1 (INT0)
 ISR(INT0_vect) {
-    setParpadeo(200, 1000);                                  // Encender 200ms y apagar 1000ms
-    TIMSK0 &= ~(1 << OCIE0A);                                // Deshabilitar interrupcion por OCRA del Timer 0
+    setParpadeo(200, 1000);  // Encender 200ms y apagar 1000ms
+    // TIMSK0 &= ~(1 << OCIE0A);                                // Deshabilitar interrupcion por OCRA del Timer 0
     EIMSK &= ~((1 << B_SO4) | (1 << B_SO5) | (1 << B_SW1));  // Deshabilitar mascara de interrupcion por sensores opticos y mecanico
     emergencia_flag = true;                                  // Activar bandera de emergencia
 }
 
 // ISR del sensor optico 4 (INT2)
 ISR(INT2_vect) {
-    dientes_cnt++;  // Incrementar contador de dientes
+    if (t_s04_cnt >= 10) {  // Si el tiempo de activacion del sensor optico 4 es mayor a 10ms
+        dientes_cnt++;      // Incrementar contador de dientes
+        t_s04_cnt = 0;      // Reiniciar contador de tiempo del sensor optico 4
+    }
 }
 
 // ISR del sensor optico 5 (INT3)
@@ -125,15 +130,15 @@ ISR(INT3_vect) {
     if (atraccion_cnt >= t_atraccion) {
         clrAtraccion();  // Desactivar atraccion
     } else {
-        TIMSK0 |= (1 << OCIE0A);  // Habilitar interrupcion por OCRA del Timer 0
-        EIMSK |= (1 << B_SO4);    // Habilitar mascara de interrupcion para el sensor optico 4 (dientes)}
+        // TIMSK0 |= (1 << OCIE0A);  // Habilitar interrupcion por OCRA del Timer 0
+        EIMSK |= (1 << B_SO4);  // Habilitar mascara de interrupcion para el sensor optico 4 (dientes)}
     }
 }
 
 // ISR del sensor mecánico SW3
 ISR(PCINT2_vect) {
-    estado_sw3 = PINK & (1 << B_SW3);             // Leer el estado del sensor mecánico SW3
-    if ((estado_sw3 ^ last_estado_sw3) && (estado_sw3==0)) {  // Si el sensor mecánico SW3 tiene un flanco de bajada
+    estado_sw3 = PINK & (1 << B_SW3);                           // Leer el estado del sensor mecánico SW3
+    if ((estado_sw3 ^ last_estado_sw3) && (estado_sw3 == 0)) {  // Si el sensor mecánico SW3 tiene un flanco de bajada
         if (t_sw3_cnt >= 1) {
             personas_cnt++;  // Incrementar contador de personas en la atraccion
             t_sw3_cnt = 0;   // Reiniciar contador de tiempo de antirrebote
@@ -145,6 +150,7 @@ ISR(PCINT2_vect) {
 // ISR del Timer 0 (cada 1ms)
 ISR(TIMER0_COMPA_vect) {
     t_subida_cnt++;  // Incrementar contador de tiempo de subida
+    t_s04_cnt++;     // Incrementar contador de tiempo del sensor optico 4
 }
 
 // ISR del Timer 4 (cada 100ms)
@@ -186,7 +192,7 @@ void setup() {
 
     // Habilitar mascara sensores opticos
     EIMSK |= (1 << B_SO4);
-    EIMSK |= (1 << B_SO5);
+    // EIMSK |= (1 << B_SO5);
 
     // Configurar interrupcion PCINT20
     PCICR |= (1 << PCIE2);
@@ -209,7 +215,7 @@ void setup() {
     OCR0A = 125 - 1;  // 125ns*125*64=1ms
 
     // Configurar el registro de interrupcion
-    // TIMSK0 |= (1 << OCIE0A);  // Habilitar interrupcion por OCRA
+    TIMSK0 |= (1 << OCIE0A);  // Habilitar interrupcion por OCRA
 
     // Timer 4 en modo CTC (Top OCRnA)
     TCCR4A &= ~(1 << WGM40);
