@@ -10,7 +10,9 @@ volatile uint8_t flanco_index = 0;
 volatile uint8_t captura_completa = 0;
 volatile uint32_t desbordamiento=0;
 volatile uint32_t tiempo=0;
-long int tiempo_total=0;
+volatile uint32_t tiempo_total = 0;
+volatile uint8_t personas=0;
+
 
 
 volatile uint8_t valores[24] = {0};
@@ -18,12 +20,18 @@ volatile uint8_t valores[24] = {0};
 char tarjeta[6];
 
 char usuarios[10][6]={":+097-"}; //Tarjetas guardadas
-volatile uint8_t num_usarios=1;    //Numero de tarjetas guardadas inicialmente
+volatile uint8_t num_usuarios=1;    //Numero de tarjetas guardadas inicialmente
 
 
 char tabla_codigos[16]={ //Tabla para la decodificacion de bits a caracteres
 	'0','1','2','3','4','5','6','7','8','9','?','?','-','?','+',':'
 };
+
+void convertidor_bits_a_numero(volatile uint8_t *vector, char *tarjeta);
+void gestionar_tarjeta(void);
+uint8_t tarjeta_valida(const char *t);
+uint32_t millis(void);
+
 
 void setup() {
 	cli();
@@ -47,6 +55,7 @@ void setup() {
 	TCCR3A &= ~(1 << WGM31);
 	TCCR3B |= (1 << WGM32);
 	TCCR3B &= ~(1 << WGM33);
+	TIMSK3 |= (1 << OCIE3A);
 
 	// Mascara para no tener preescalado
 	TCCR3B = (TCCR3B | (1 << CS30));
@@ -64,7 +73,7 @@ ISR(TIMER1_CAPT_vect) {
 		tiempos[flanco_index] = tiempo;  // Guarda el instante del flanco
 		flanco_index++;
 		TCCR1B ^= (1 << ICES1);  //parpadea el LED, hay que cambiarlo
-		PORTL ^= (1 << PL7);            // Cambiar flanco (subida/bajada), hay que cambiarlo
+		//PORTL ^= (1 << PL7);            // Cambiar flanco (subida/bajada), hay que cambiarlo
 	}
 	if (flanco_index >= 52) {
 		captura_completa = 1;  // Señala que ya tenemos una tarjeta leída
@@ -77,7 +86,7 @@ ISR(TIMER1_OVF_vect){
 }
 
 
-long int milis(){
+uint32_t millis(){
 	return tiempo_total;
 }
 
@@ -92,7 +101,7 @@ void procesar_tarjeta() {
 	for (uint8_t i = 2, j=0; i < 26; i++, j++) { //Empezamos desde 4 para ignorar el glitch y la primera barra
 		uint32_t dur_negro = tiempos[2*i] - tiempos[2*i-1];  // tiempo negro
 		uint32_t dur_total = tiempos[2*i+1] - tiempos[2*i-1];  // tiempo total bit
-		uint32_t dur_blanco = dur_total - dur_negro;
+
 		// Si el pulso negro dura mas de 2/3 del total ? bit = 1, si no ? bit = 0
 
 		valores[j] = (dur_negro * 3 > dur_total * 2) ? 0 : 1; //creo que esto esta al reves
@@ -146,57 +155,61 @@ void comparar_tarjeta(const char* usuario, const char* leida) {
 }
 
 void gestionar_tarjeta(){
-	 uint32_t tiempo_inicial;
-	 uint32_t tiempo_actual;
-	 uint32_t duracion_espera;
-	 uint8_t encontrada = 0;
-	 
-	  if (!tarjeta_valida(tarjeta)) {
-		  tiempo_inicial = millis();
-		  do {
-			  tiempo_actual = millis();
-			  if ((tiempo_actual - tiempo_inicial) % 200 < 100) {  //Entre 200 porque es el periodo: 100 encendido y 100 apagado
-				    PORTL |= (1 << PL7);  // LED ON
-				    } else {
-				    PORTL &= ~(1 << PL7); // LED OFF
-			    }
-			 } while (tiempo_actual - tiempo_inicial < 1000);
-			  PORTL &= ~(1 << PL7);    //Apagamos LED definitivamente
-			  
-		 } else {
-			  // Comprobamos si la tarjeta está en la lista de usuarios
-			  for (uint8_t i = 0; i < num_usuarios && !encontrada; i++) {
-				  if (strcmp(tarjeta, usuarios[i]) == 0) {
-					  encontrada = 1;
-				  }
-			  }
-			   if (encontrada) {
-				   duracion_espera = 1000;
-				   } else {
-				   duracion_espera = 3000;
-				   //Añadimos la tarjeta puesto que no estaba en la lista
-				    if (num_usuarios < 10) {
-					    strcpy(usuarios[num_usuarios], tarjeta);
-					    num_usuarios++;
-				    }
-			   }
-			   
-			   tiempo_inicial = millis();
-			   PORTL |= (1 << PL7);		//Encendemos led
-			   do {
-				   tiempo_actual = millis();
-			   } while (tiempo_actual - tiempo_inicial < duracion_espera);	//Apaga tanto si encontrada como no, varian solo los segundos
-			   PORTL &= ~(1 << PL7);
+	uint32_t tiempo_inicial=0;
+	uint32_t tiempo_actual=0;
+	uint32_t duracion_espera=0;
+	uint8_t encontrada = 0;
+	
+	if (!tarjeta_valida(tarjeta)) {
+		tiempo_inicial = millis();
+		do {
+			tiempo_actual = millis();
+			if ((tiempo_actual - tiempo_inicial) % 200 < 100) {  //Entre 200 porque es el periodo: 100 encendido y 100 apagado
+				PORTL |= (1 << PL7);  // LED ON
+				} else {
+				PORTL &= ~(1 << PL7); // LED OFF
+			}
+		} while (tiempo_actual - tiempo_inicial < 1000);
+		PORTL &= ~(1 << PL7);    //Apagamos LED definitivamente
+		
+		} else {
+		// Comprobamos si la tarjeta está en la lista de usuarios
+		for (uint8_t i = 0; i < num_usuarios && !encontrada; i++) {
+			if (strcmp(tarjeta, usuarios[i]) == 0) {
+				encontrada = 1;
+			}
 		}
+		if (encontrada) {
+			duracion_espera = 1000;
+			} else {
+			duracion_espera = 3000;
+			//Añadimos la tarjeta puesto que no estaba en la lista
+			if (num_usuarios < 10) {
+				strcpy(usuarios[num_usuarios], tarjeta);
+				num_usuarios++;
+			}
+		}
+		
+		tiempo_inicial = millis();
+		PORTL |= (1 << PL7);		//Encendemos led
+		do {
+			tiempo_actual = millis();
+		} while (tiempo_actual - tiempo_inicial < duracion_espera);	//Apaga tanto si encontrada como no, varian solo los segundos
+		PORTL &= ~(1 << PL7);
+	}
 }
 
 
 uint8_t tarjeta_valida(const char* t) {
 	for (uint8_t i = 0; i < 6; i++) {
-		if (t[i] == '?' || t[i] == '\0') return 0;		//Menos de 6 caracteres o caracter '?'
+		if (t[i] == '?' || t[i] == '\0'){
+		return 0;	}	//Menos de 6 caracteres o caracter '?'
 	}
-	if (t[6] != '\0') return 0; // Más de 6 caracteres
-	return 1;
+	if (t[6] != '\0'){
+		return 0; //Más de 6 caracteres
+		} else{
+		personas++;
+	return 1;}
 }
 
 int main(void) {
