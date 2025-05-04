@@ -31,6 +31,7 @@ volatile uint8_t estado_sw3 = 1;
 volatile uint8_t last_estado_sw3 = 1;  // Variable para almacenar el estado anterior del sensor mecanico SW3
 
 volatile uint16_t t_s04_cnt = 0;  // Contador de tiempo para el sensor optico 4 en milisegundos
+volatile uint16_t t_s05_cnt = 0;  // Contador de tiempo para el sensor optico 5 en milisegundos  
 
 bool espera_flag = false;          // Bandera de contador de espera´
 uint16_t t_espera = 100;           // Tiempo de espera en decimas de segundo
@@ -127,11 +128,15 @@ ISR(INT2_vect) {
 
 // ISR del sensor optico 5 (INT3)
 ISR(INT3_vect) {
-    if (atraccion_cnt >= t_atraccion) {
-        clrAtraccion();  // Desactivar atraccion
-    } else {
-        // TIMSK0 |= (1 << OCIE0A);  // Habilitar interrupcion por OCRA del Timer 0
-        EIMSK |= (1 << B_SO4);  // Habilitar mascara de interrupcion para el sensor optico 4 (dientes)}
+    if(t_s05_cnt >= 10){    //Si el tiempo de activacion del sensor optico 5 es mayor a 10ms
+        if (atraccion_cnt >= t_atraccion) {
+            clrAtraccion();  // Desactivar atraccion
+            t_s05_cnt = 0;
+        } else {
+            // TIMSK0 |= (1 << OCIE0A);  // Habilitar interrupcion por OCRA del Timer 0
+            EIMSK |= (1 << B_SO4);  // Habilitar mascara de interrupcion para el sensor optico 4 (dientes)
+            t_s05_cnt = 0;
+        }
     }
 }
 
@@ -151,6 +156,7 @@ ISR(PCINT2_vect) {
 ISR(TIMER0_COMPA_vect) {
     t_subida_cnt++;  // Incrementar contador de tiempo de subida
     t_s04_cnt++;     // Incrementar contador de tiempo del sensor optico 4
+    t_s05_cnt++;     // Incrementar contador de tiempo del sensor optico 5
 }
 
 // ISR del Timer 4 (cada 100ms)
