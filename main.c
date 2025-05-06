@@ -49,7 +49,8 @@ long int tiempo_referencia_cerrandose_SW2 = 0;		//*Modificar*//
 long int overflows_timers = 0;
 
 bool bandera_SW2 = 0;			//*Modificar*// //Mirar en qué punto tiene que cambiarse a 0!!! // Bandera que me permite frenarse el motor cuando toco SW2 y que impide el frenado el resto del codigo
-volatile long int tiempo_actual_SW2 = 0;	//*Modificar*//
+long int tiempo_actual_SW2 = 0;	//*Modificar*//
+long int tiempo_actual_L2 = 0;
 volatile int ciclo = 0;
 
 void suma1aMilis(){
@@ -141,26 +142,26 @@ ISR(TIMER5_CAPT_vect){
 		
 		r=(double)tB/(double)tA;
 		
-		if ((r>1) && (r<1.1)){ // 1<r<1.1
+		if ((r>1.28) && (r<1.35)){ // 1<r<1.1
 			dinero=dinero+1;
 			P_BK1 &= ~( 1 << B_BK1);
 			//valido=1;
 			
 		}
 		
-		if ((r>1.15) && (r<1.25)){ // 1.15<r<1.25
+		else if ((r>1.36) && (r<1.5)){ // 1.15<r<1.25
 			dinero=dinero+0.5;
 			P_BK1 &= ~( 1 << B_BK1);
 			//valido=1;
 		}
 		
-		if ((r>0.85) && (r<0.95)){ // 0.85<r<0.95
+		else if ((r>1.2) && (r<1.28)){ // 0.85<r<0.95
 			dinero=dinero+0.2;
 			P_BK1 &= ~( 1 << B_BK1);
 			//valido=1;
 		}
 		
-		if ((r>0.65) && (r<0.75)){ // 0.65<r<0.75
+		else if ((r>1.05) && (r<1.2)){ // 0.65<r<0.75
 			dinero=dinero+0.1;
 			P_BK1 &= ~( 1 << B_BK1);
 			//valido=1;
@@ -257,7 +258,8 @@ void Monedero(){
 		personas++;
 	} 
 	if (enable_L2==1){
-		if (tiempo_referencia_L2 - milis() < 1000){
+		tiempo_actual_L2 = milis();
+		if (tiempo_actual_L2 - tiempo_referencia_L2 < 1000){
 			P_L2 |= ( 1 << B_L2);
 		}
 		else {
@@ -285,7 +287,7 @@ void Monedero(){
 	}
 	*/
 	tiempo_actual_SW2 = milis();
-	if ((((PIN_SW2 >> B_SW2) & 1) == 1)  && (tiempo_actual_SW2-tiempo_referencia_abierto_SW2>1000)){
+	if ((((PIN_SW2 >> B_SW2) & 1) == 0)  && (tiempo_actual_SW2-tiempo_referencia_abierto_SW2>1000)){
 		P_BK1 &= ~( 1 << B_BK1);	
 		
 		tiempo_referencia_cerrandose_SW2=milis();
@@ -293,7 +295,7 @@ void Monedero(){
 	}
 	
 	
-	if ((((PIN_SW2 >> B_SW2) & 1) == 0) && (bandera_SW2==1) && (tiempo_actual_SW2- tiempo_referencia_cerrandose_SW2 >1000) ) { //REVISAR SI ASI MIRO SI YA SE HA DESACTIVADO el switch Y VER SI PONER UN TIEMPO PARA DEJAR QUE SE FRENE
+	if ((((PIN_SW2 >> B_SW2) & 1) == 1) && (bandera_SW2==1) && (tiempo_actual_SW2- tiempo_referencia_cerrandose_SW2 >1000) ) { //REVISAR SI ASI MIRO SI YA SE HA DESACTIVADO el switch Y VER SI PONER UN TIEMPO PARA DEJAR QUE SE FRENE
 		// FALTA AÑADIR ALGO DEL TIPO "&& X-MILIS()>TIEMPO_QUE_QUIERO_QUE_ESTE_ABIERTO/CERRADO"
 		P_BK1 |=( 1 << B_BK1); // deshabilitar motor poniendo a 1 el freno
 		
@@ -478,6 +480,10 @@ void setup(){
 	EICRA|=(1<<ISC10);
 	EIMSK|=(1<<INT1);
 	
+	
+	P_BK1 &= ~(1 << B_BK1);
+	
+	
 	sei();
 }
 
@@ -486,10 +492,11 @@ int main(void)
 {
     // Llamamos a setup 1 vez
 	setup();
+	
     while (1) 
     {
 		//printf("tiempo_total vale: %ld\n",tiempo_total);
-		/* Monedero(); */
+		Monedero();
 		//FuncionaLed();
 		//FuncionaMotor();		
 		//tLed=milis();
