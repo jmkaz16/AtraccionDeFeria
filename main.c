@@ -26,7 +26,7 @@ volatile bool SO3_flanco=false; // me dice si estoy en un flanco "par" o "impar"
 
 volatile long int tA=0;
 volatile long int tB=0;
-volatile double r = 0;
+volatile float r = 0;
 
 volatile float dinero = 0; // guardamos el valor actualizado de ESA persona pagando (se reinicia al validar a ESA persona)
 volatile bool valido = 0;  // si la moneda que entra esta en un rango aceptable de "r", valido valdra "1"; "0" en caso contrario
@@ -67,7 +67,7 @@ ISR(TIMER3_COMPA_vect){
 
 ISR(INT1_vect){//activar por flanco de bajada
 	P_BK1 |= ( 1 << B_BK1);
-	tiempo_referencia_abierto_SW2=milis();
+	//tiempo_referencia_abierto_SW2=milis();
 	bandera_SW2 = 1; // ***REVISAR***
 }
 
@@ -94,12 +94,12 @@ ISR(TIMER5_CAPT_vect){
 		if (overflows_timers==0){
 			tA = (ICR5 - tA_aux);
 		}
-		if (overflows_timers!=0) {
+		else { // cambiar por else
 			tA = (65536 - tA_aux) + ICR5 + 65536*(overflows_timers-1);
 		}
 		tB_aux = ICR5;
 		
-		SO3_flanco = true;
+		//SO3_flanco = true;
 		P_L2 |= ( 1 << B_L2);
 		
 		
@@ -121,13 +121,13 @@ ISR(TIMER5_CAPT_vect){
 		P_L2 &= ~( 1 << B_L2);
 		
 		
-		SO3_flanco = false;
+		//SO3_flanco = false;
 		
 		
 		if (overflows_timers==0){
 			tB = (ICR5 - tB_aux);
 		}
-		if (overflows_timers!=0) {
+		else { // cambiar a else
 			tB = (65536 - tB_aux) + ICR5 + 65536*(overflows_timers-1);
 		}
 		
@@ -140,31 +140,36 @@ ISR(TIMER5_CAPT_vect){
 		*/
 		TCCR5B |= (1 << ICES5);
 		
-		r=(double)tB/(double)tA;
+		r=(float)tB/(float)tA; //cambiar r a float y conversion de tipo tambien
 		
 		if ((r>1.28) && (r<1.35)){ // 1<r<1.1
 			dinero=dinero+1;
-			P_BK1 &= ~( 1 << B_BK1);
+			//P_BK1 &= ~( 1 << B_BK1);
 			//valido=1;
 			
 		}
-		
-		else if ((r>1.36) && (r<1.5)){ // 1.15<r<1.25
+		/*
+		else if ((r>1.36) && (r<1.44)){ // 1.15<r<1.25
 			dinero=dinero+0.5;
-			P_BK1 &= ~( 1 << B_BK1);
+			//P_BK1 &= ~( 1 << B_BK1);
 			//valido=1;
 		}
+		*/
 		
 		else if ((r>1.2) && (r<1.28)){ // 0.85<r<0.95
 			dinero=dinero+0.2;
-			P_BK1 &= ~( 1 << B_BK1);
+			//P_BK1 &= ~( 1 << B_BK1);
 			//valido=1;
 		}
 		
 		else if ((r>1.05) && (r<1.2)){ // 0.65<r<0.75
 			dinero=dinero+0.1;
-			P_BK1 &= ~( 1 << B_BK1);
+			//P_BK1 &= ~( 1 << B_BK1);
 			//valido=1;
+		}
+		else {
+			P_BK1 &= ~( 1 << B_BK1);
+			tiempo_referencia_cerrandose_SW2=milis();
 		}
 		
 	}
@@ -287,19 +292,20 @@ void Monedero(){
 	}
 	*/
 	tiempo_actual_SW2 = milis();
-	if ((((PIN_SW2 >> B_SW2) & 1) == 0)  && (tiempo_actual_SW2-tiempo_referencia_abierto_SW2>1000)){
+	if ((((PIN_SW2 >> B_SW2) & 1) == 1)  && (tiempo_actual_SW2-tiempo_referencia_abierto_SW2>1000)){
 		P_BK1 &= ~( 1 << B_BK1);	
 		
-		tiempo_referencia_cerrandose_SW2=milis();
+		//tiempo_referencia_cerrandose_SW2=milis();
 		
 	}
 	
 	
-	if ((((PIN_SW2 >> B_SW2) & 1) == 1) && (bandera_SW2==1) && (tiempo_actual_SW2- tiempo_referencia_cerrandose_SW2 >1000) ) { //REVISAR SI ASI MIRO SI YA SE HA DESACTIVADO el switch Y VER SI PONER UN TIEMPO PARA DEJAR QUE SE FRENE
+	if ((((PIN_SW2 >> B_SW2) & 1) == 0) && (bandera_SW2==1) && (tiempo_actual_SW2- tiempo_referencia_cerrandose_SW2 >1000) ) { //REVISAR SI ASI MIRO SI YA SE HA DESACTIVADO el switch Y VER SI PONER UN TIEMPO PARA DEJAR QUE SE FRENE
 		// FALTA AÑADIR ALGO DEL TIPO "&& X-MILIS()>TIEMPO_QUE_QUIERO_QUE_ESTE_ABIERTO/CERRADO"
 		P_BK1 |=( 1 << B_BK1); // deshabilitar motor poniendo a 1 el freno
 		
 		bandera_SW2 = 0; //CONFIRMAR QUE ES AQUÍ!
+		tiempo_referencia_abierto_SW2=milis();
 	}
 	
 }
