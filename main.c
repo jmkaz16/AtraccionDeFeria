@@ -48,11 +48,10 @@ volatile uint16_t t_subida_cnt = 0;  // Contador de tiempo de subida en milisegu
 uint16_t t_subida = 0;               // Tiempo de subida en milisegundos
 uint16_t t_subida_min = 600;         // Tiempo de subida minimo en milisegundos
 uint16_t t_subida_f1 = 725;
-uint16_t t_subida_f2 = 850;
-uint16_t t_subida_f3 = 1000;
-uint16_t t_dientes1 = 4.5;              // Tiempo por diente en milisegundos
-uint16_t t_dientes2 = 0.25;
-uint16_t t_dientes3 = 0.25;
+//uint16_t t_subida_f2 = 850;
+uint16_t t_dientes1 = 5;              // Tiempo por diente en milisegundos
+uint16_t t_dientes2 = -0.5;
+//uint16_t t_dientes3 = 0.25;
 
 volatile bool emergencia_flag = false;  // Bandera de emergencia
 
