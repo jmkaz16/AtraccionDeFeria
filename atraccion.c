@@ -22,6 +22,8 @@ volatile uint8_t last_estado_sw3 = 1;  // Variable para almacenar el estado ante
 volatile uint16_t t_s04_cnt = 0;  // Contador de tiempo para el sensor optico 4 en milisegundos
 volatile uint16_t t_s05_cnt = 0;  // Contador de tiempo para el sensor optico 5 en milisegundos
 
+volatile uint8_t timer4_cnt = 0;  // Contador de tiempo para sustituir el timer 4 de 100ms
+
 bool espera_flag = false;          // Bandera de contador de espera´
 uint16_t t_espera = 10;            // Tiempo de espera en decimas de segundo (100)
 volatile uint16_t espera_cnt = 0;  // Contador de tiempo espera en decimas de segundo
@@ -95,7 +97,7 @@ void atraccionSetup() {
     // Configurar el registro de interrupcion
     TIMSK0 |= (1 << OCIE0A);  // Habilitar interrupcion por OCRA
 
-    // Timer 4 en modo CTC (Top OCRnA)
+    /*// Timer 4 en modo CTC (Top OCRnA)
     TCCR4A &= ~(1 << WGM40);
     TCCR4A &= ~(1 << WGM41);
     TCCR4B |= (1 << WGM42);
@@ -110,7 +112,7 @@ void atraccionSetup() {
     OCR4A = 12500 - 1;  // 125ns*12500*64=100ms
 
     // Configurar el registro de interrupcion
-    TIMSK4 |= (1 << OCIE4A);  // Habilitar interrupcion por OCRA
+    TIMSK4 |= (1 << OCIE4A);  // Habilitar interrupcion por OCRA*/
 
     // Configurar semilla para el generador de numeros aleatorios
     srand(time(NULL));
@@ -201,9 +203,9 @@ void moverAtraccion() {
                             t_subida_cnt = 0;        // Reiniciar contador de tiempo de subida
                     }*/
         }
-    }else{
-		clrBit(P_EN2, B_EN2); // Para asegurarse que el motor se para
-	}
+    } else {
+        clrBit(P_EN2, B_EN2);  // Para asegurarse que el motor se para
+    }
 }
 
 // Configurar tiempos de parpadeo en ms
@@ -271,19 +273,24 @@ ISR(PCINT2_vect) {
 
 // ISR del Timer 0 (cada 1ms)
 ISR(TIMER0_COMPA_vect) {
+    timer4_cnt++;    // Incrementar contador de tiempo del timer 0
     t_subida_cnt++;  // Incrementar contador de tiempo de subida
     t_s04_cnt++;     // Incrementar contador de tiempo del sensor optico 4
     t_s05_cnt++;     // Incrementar contador de tiempo del sensor optico 5
     t_sw3_cnt++;
+
+    if (timer4_cnt >= 100 - 1) {  // Si el contador de tiempo del timer 4 es mayor a 100ms
+        parpadeo_cnt++;
+        if (espera_flag) {
+            espera_cnt++;
+        }
+        if (atraccion_flag) {
+            atraccion_cnt++;
+        }
+        timer4_cnt = 0;  // Reiniciar contador de tiempo del timer 4
+    }
 }
 
 // ISR del Timer 4 (cada 100ms)
 ISR(TIMER4_COMPA_vect) {
-    parpadeo_cnt++;
-    if (espera_flag) {
-        espera_cnt++;
-    }
-    if (atraccion_flag) {
-        atraccion_cnt++;
-    }
 }
