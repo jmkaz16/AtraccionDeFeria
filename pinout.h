@@ -35,6 +35,8 @@
 #define B_SW3 4
 
 // Puertos y bits de los LEDs
+#define P_L1 PORTL
+#define B_L1 7
 #define P_L2 PORTL
 #define B_L2 4
 #define P_L3 PORTK
