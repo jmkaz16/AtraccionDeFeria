@@ -25,7 +25,7 @@ volatile uint16_t t_s05_cnt = 0;  // Contador de tiempo para el sensor optico 5 
 volatile uint8_t timer4_cnt = 0;  // Contador de tiempo para sustituir el timer 4 de 100ms
 
 bool espera_flag = false;          // Bandera de contador de espera´
-uint16_t t_espera = 10;            // Tiempo de espera en decimas de segundo (100)
+uint16_t t_espera = 100;            // Tiempo de espera en decimas de segundo (10)
 volatile uint16_t espera_cnt = 0;  // Contador de tiempo espera en decimas de segundo
 
 bool atraccion_flag = false;          // Bandera de movimiento de la atraccion
