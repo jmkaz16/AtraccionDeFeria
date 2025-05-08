@@ -84,20 +84,16 @@ ISR(TIMER5_CAPT_vect) {
 
         r = (float)tB / (float)tA;  // cambiar r a float y conversion de tipo tambien
 
-        if ((r > 1.28) && (r < 1.35)) {  // 1<r<1.1
+        if ((r > MONEDA100_MIN) && (r < MONEDA100_MAX)) {  // 1<r<1.1
             dinero = dinero + 1;
 
-        } else if ((r > 1.36) && (r < 1.5)) {  // 1.15<r<1.25
+        } else if ((r > MONEDA50_MIN) && (r < MONEDA50_MAX)) {  // 1.15<r<1.25
             dinero = dinero + 0.5;
 
-        }
-
-        else if ((r > 1.2) && (r < 1.28)) {  // 0.85<r<0.95
+        } else if ((r > MONEDA20_MIN) && (r < MONEDA20_MAX)) {  // 0.85<r<0.95
             dinero = dinero + 0.2;
 
-        }
-
-        else if ((r > 1.05) && (r < 1.2)) {  // 0.65<r<0.75
+        } else if ((r > MONEDA10_MIN) && (r < MONEDA10_MAX)) {  // 0.45<r<0.55
             dinero = dinero + 0.1;
 
         } else {
