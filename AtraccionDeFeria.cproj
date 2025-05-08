@@ -29,7 +29,7 @@
     <eraseonlaunchrule>0</eraseonlaunchrule>
     <EraseKey />
     <avrtool>com.atmel.avrdbg.tool.avrdragon</avrtool>
-    <avrtoolserialnumber>00A20004710A</avrtoolserialnumber>
+    <avrtoolserialnumber>00A200071086</avrtoolserialnumber>
     <avrdeviceexpectedsignature>0x1E9608</avrdeviceexpectedsignature>
     <com_atmel_avrdbg_tool_avrdragon>
       <ToolOptions>
@@ -39,7 +39,7 @@
         <InterfaceName>JTAG</InterfaceName>
       </ToolOptions>
       <ToolType>com.atmel.avrdbg.tool.avrdragon</ToolType>
-      <ToolNumber>00A20004710A</ToolNumber>
+      <ToolNumber>00A200071086</ToolNumber>
       <ToolName>AVR Dragon</ToolName>
     </com_atmel_avrdbg_tool_avrdragon>
     <avrtoolinterface>JTAG</avrtoolinterface>
@@ -56,6 +56,17 @@
         </dependencies>
       </framework-data>
     </AsfFrameworkConfig>
+    <com_atmel_avrdbg_tool_simulator>
+      <ToolOptions xmlns="">
+        <InterfaceProperties>
+        </InterfaceProperties>
+        <InterfaceName>JTAG</InterfaceName>
+      </ToolOptions>
+      <ToolType xmlns="">com.atmel.avrdbg.tool.simulator</ToolType>
+      <ToolNumber xmlns="">
+      </ToolNumber>
+      <ToolName xmlns="">Simulator</ToolName>
+    </com_atmel_avrdbg_tool_simulator>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
     <ToolchainSettings>
@@ -146,6 +157,12 @@
       <SubType>compile</SubType>
     </Compile>
     <Compile Include="pinout.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="tarjetero.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="tarjetero.h">
       <SubType>compile</SubType>
     </Compile>
   </ItemGroup>
