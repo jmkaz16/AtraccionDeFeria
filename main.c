@@ -32,98 +32,74 @@ volatile float dinero = 0; // guardamos el valor actualizado de ESA persona paga
 volatile bool valido = 0;  // si la moneda que entra esta en un rango aceptable de "r", valido valdra "1"; "0" en caso contrario
 
 // Variables del "monedero" main
-long int tiempo_referencia_L2 = 0; // temporizador auxiliar para ver cuanto tiempo lleva encendido el led L2, ya que queremos que este encendido solo 1000 ms
+uint32_t tiempo_referencia_L2 = 0; // temporizador auxiliar para ver cuanto tiempo lleva encendido el led L2, ya que queremos que este encendido solo 1000 ms
 bool enable_L2 = 0;	   // similar a "SO2_flanco": es una "bandera"
-int personas = 0;  //**IMPORTANTE** Hablarla con todos, para que la usen en Integracion
+int personas_cnt = 0;  //**IMPORTANTE** Hablarla con todos, para que la usen en Integracion
 
-long int tiempo_referencia_abierto_SW2 = 0;			//*Modificar*// // contador de cuantos milisegundos lleva abierto el Switch
-long int tiempo_referencia_cerrandose_SW2 = 0;		//*Modificar*//
-
-//ya no se usan ¿?
-//volatile long int VALOR_DE_PRUEBA = 0;	//*Modificar*// // este es el numero de milisegundos que queremos que este "abierto" el Switch 2, y se medira a ojo; no deberan caer mas monedas en ese tiempo, MINIMO
-//volatile long int tLed = 0;				//*Modificar*//
-//volatile long int milisNoFunciona = 0;	//*Modificar*//
-//volatile bool ledEncendido = false;		//*Modificar*//
-//volatile int HeEntradoEnElIf = 0;		//*Modificar*//
+uint32_t tiempo_referencia_abierto_SW2 = 0;			//*Modificar*// // contador de cuantos milisegundos lleva abierto el Switch
+uint32_t tiempo_referencia_cerrandose_SW2 = 0;		//*Modificar*//
 
 long int overflows_timers = 0;
 
-bool bandera_SW2 = 0;			//*Modificar*// //Mirar en qué punto tiene que cambiarse a 0!!! // Bandera que me permite frenarse el motor cuando toco SW2 y que impide el frenado el resto del codigo
-long int tiempo_actual_SW2 = 0;	//*Modificar*//
-long int tiempo_actual_L2 = 0;
+bool bandera_SW2 = 0;			 // Bandera que me permite frenarse el motor cuando toco SW2 y que impide el frenado el resto del codigo
+uint32_t tiempo_actual_SW2 = 0;	//*Modificar*//
+uint32_t tiempo_actual_L2 = 0;
 volatile int ciclo = 0;
 
-void suma1aMilis(){
-	tiempo_total++;
-}
+//void suma1aMilis(){
+//	tiempo_total++;
+//}
 
-long int milis(){
-	return tiempo_total;
-}
+//long int milis(){
+//	return tiempo_total;
+//}
 
-ISR(TIMER3_COMPA_vect){
-	suma1aMilis();
-}
+//ISR(TIMER3_COMPA_vect){
+//	suma1aMilis();
+//}
 
-ISR(INT1_vect){//activar por flanco de bajada
+ISR(INT1_vect){
 	P_BK1 |= ( 1 << B_BK1);
-	//tiempo_referencia_abierto_SW2=milis();
-	bandera_SW2 = 1; // ***REVISAR***
+	bandera_SW2 = 1; 
 }
 
 
 ISR(TIMER4_CAPT_vect){
-	//P_L2 |= ( 1 << B_L2);
+
 	overflows_timers=0;
-	tA_aux = ICR4; // IGUAL ES PORQUE COGE EL OCRA, Y AHORA ESTA CONFIGURADO EL B ¿?
+	tA_aux = ICR4; 
 }
 
 
 ISR(TIMER5_CAPT_vect){
 	
-	//P_L2 &= ~( 1 << B_L2);
 	
 	
-	if (TCCR5B & (1 << ICES5)){ //if (SO3_flanco==false)
+	
+	if (TCCR5B & (1 << ICES5)){ 
 		
 		P_L2 |= ( 1 << B_L2);
-		
-		// hay que mirar si esto funciona bien; igual que nos pasa con "milis()"
 		
 		
 		if (overflows_timers==0){
 			tA = (ICR5 - tA_aux);
 		}
-		else { // cambiar por else
+		else { 
 			tA = (65536 - tA_aux) + ICR5 + 65536*(overflows_timers-1);
 		}
 		tB_aux = ICR5;
 		
-		//SO3_flanco = true;
+		
 		P_L2 |= ( 1 << B_L2);
-		
-		
-		/*
-		TIMSK5 &= ~(1 << ICIE5);
-		TCCR5B &= ~(1 << ICES5); // Cambiar a que se active la ISR por flanco de Bajada
-		TIFR5 |= (1 << ICF5);          // Limpia la bandera de captura
-		TIMSK5 |= (1 << ICIE5);
-		*/
-		
 		overflows_timers = 0;
 		
 		TCCR5B &= ~(1 << ICES5);
 	}
 
 	
-	else { //if (SO3_flanco == true)
+	else { 
 		
 		P_L2 &= ~( 1 << B_L2);
-		
-		
-		//SO3_flanco = false;
-		
-		
 		if (overflows_timers==0){
 			tB = (ICR5 - tB_aux);
 		}
@@ -131,45 +107,30 @@ ISR(TIMER5_CAPT_vect){
 			tB = (65536 - tB_aux) + ICR5 + 65536*(overflows_timers-1);
 		}
 		
-		//
-		/*
-		TIMSK5 &= ~(1 << ICIE5);
-		TCCR5B |= (1 << ICES5); // Cambiar a que se active la ISR por flanco de Subida
-		TIFR5 |= (1 << ICF5);          // Limpia la bandera de captura
-		TIMSK5 |= (1 << ICIE5);
-		*/
+	
 		TCCR5B |= (1 << ICES5);
 		
 		r=(float)tB/(float)tA; //cambiar r a float y conversion de tipo tambien
 		
 		if ((r>1.28) && (r<1.35)){ // 1<r<1.1
 			dinero=dinero+1;
-			//P_BK1 &= ~( 1 << B_BK1);
-			//valido=1;
+			
 			
 		}
-		/*
-		else if ((r>1.36) && (r<1.44)){ // 1.15<r<1.25
-			dinero=dinero+0.5;
-			//P_BK1 &= ~( 1 << B_BK1);
-			//valido=1;
-		}
-		*/
+	
 		
 		else if ((r>1.2) && (r<1.28)){ // 0.85<r<0.95
 			dinero=dinero+0.2;
-			//P_BK1 &= ~( 1 << B_BK1);
-			//valido=1;
+			
 		}
 		
 		else if ((r>1.05) && (r<1.2)){ // 0.65<r<0.75
 			dinero=dinero+0.1;
-			//P_BK1 &= ~( 1 << B_BK1);
-			//valido=1;
+			
 		}
 		else {
 			P_BK1 &= ~( 1 << B_BK1);
-			tiempo_referencia_cerrandose_SW2=milis();
+			tiempo_referencia_cerrandose_SW2=millis();
 		}
 		
 	}
@@ -182,88 +143,16 @@ ISR(TIMER4_COMPB_vect){
 
 
 
-/*
-
-void interrupcion_SO2(){
-	if (SO2_flanco==0){
-		tA_aux = milis();
-		SO2_flanco = 1;
-	}
-	else {
-		SO2_flanco = 0;
-	}
-}
-
-void interrupcion_SO3(){
-	if (SO3_flanco==0){
-		tA=milis()-tA_aux;
-		tB_aux = milis();
-		SO3_flanco = 1;
-	}
-	else {
-		SO3_flanco = 0;
-		tB=tB_aux-milis();
-		r=(double)tB/(double)tA;
-		
-		if ((r>1) && (r<1.1)){ // 1<r<1.1
-			dinero=dinero+1;
-			valido=1;
-		}
-		
-		else if ((r>1.15) && (r<1.25)){ // 1.15<r<1.25
-			dinero=dinero+0.5;
-			valido=1;
-		}
-		
-		else if ((r>0.85) && (r<0.95)){ // 0.85<r<0.95
-			dinero=dinero+0.2;
-			valido=1;
-		}
-		
-		else if ((r>0.65) && (r<0.75)){ // 0.65<r<0.75
-			dinero=dinero+0.1;
-			valido=1;
-		}
-		
-		else {
-			valido=0;
-		}
-	}
-}
-
-*/
-
-/*
-void compruebaPCINT0(){
-	//if (bit2dePCINT0!=PORTB(0))
-	// (Valor_PINB & (1 << B_SO2)) >> B_SO2
-	
-	if (((Valor_PINB & (1 << B_SO2)) >> B_SO2) != ((PINB & (1 << B_SO2)) >> B_SO2)){	
-		interrupcion_SO2();			
-	} // igual es posible que quisiesemos no hacer "else if" sino todo "if...; if...; ..."
-	else if (((Valor_PINB & (1 << B_SO3)) >> B_SO3) != ((PINB & (1 << B_SO3)) >> B_SO3)) {
-		interrupcion_SO3();		
-	}
-	
-	Valor_PINB = PINB;
-}
-*/	
-
-/*
-ISR(PCINT0_vect){
-	compruebaPCINT0();
-}
-*/
 
 void Monedero(){
 	if (dinero >= 1.20){
 		dinero = 0;
-		tiempo_referencia_L2 = milis();
+		tiempo_referencia_L2 = millis();
 		enable_L2 = 1;
-		personas++;
+		personas_cnt++;
 	} 
 	if (enable_L2==1){
-		tiempo_actual_L2 = milis();
+		tiempo_actual_L2 = millis();
 		if (tiempo_actual_L2 - tiempo_referencia_L2 < 1000){
 			P_L2 |= ( 1 << B_L2);
 		}
@@ -273,101 +162,31 @@ void Monedero(){
 		}
 	}
 	
-	// FORMA ANTERIOR, CON CONSULTA PERIODICA
-	/* 
-	if (valido==1){
-		P_BK1 &= ~( 1 << B_BK1); // habilitar motor poniendo a 0 el freno
-		if ((((PIND & (1 << B_SW2)) >> B_SW2))==1){
-			P_BK1 |= ( 1 << B_BK1); // deshabilitar motor poniendo a 1 el freno
-			tiempo_referencia_abierto_SW2 = milis();
-			valido = 0;
-		}
-	}
-	if (tiempo_referencia_abierto_SW2 - milis () > VALOR_DE_PRUEBA ) {// Este valor habra que medirlo "a ojo"
-		P_BK1 &= ~( 1 << B_BK1); // habilitar motor poniendo a 0 el freno
-		if ((((PIND & (1 << B_EN1)) >> B_EN1))==0){
-			P_BK1 |= ( 1 << B_BK1); // deshabilitar motor poniendo a 1 el freno
-			tiempo_referencia_abierto_SW2 = 0;
-		}
-	}
-	*/
-	tiempo_actual_SW2 = milis();
+
+	tiempo_actual_SW2 = millis();
 	if ((((PIN_SW2 >> B_SW2) & 1) == 1)  && (tiempo_actual_SW2-tiempo_referencia_abierto_SW2>1000)){
 		P_BK1 &= ~( 1 << B_BK1);	
 		
-		//tiempo_referencia_cerrandose_SW2=milis();
-		
 	}
 	
 	
-	if ((((PIN_SW2 >> B_SW2) & 1) == 0) && (bandera_SW2==1) && (tiempo_actual_SW2- tiempo_referencia_cerrandose_SW2 >1000) ) { //REVISAR SI ASI MIRO SI YA SE HA DESACTIVADO el switch Y VER SI PONER UN TIEMPO PARA DEJAR QUE SE FRENE
-		// FALTA AÑADIR ALGO DEL TIPO "&& X-MILIS()>TIEMPO_QUE_QUIERO_QUE_ESTE_ABIERTO/CERRADO"
+	if ((((PIN_SW2 >> B_SW2) & 1) == 0) && (bandera_SW2==1) && (tiempo_actual_SW2- tiempo_referencia_cerrandose_SW2 >1000) ) { 
+		
 		P_BK1 |=( 1 << B_BK1); // deshabilitar motor poniendo a 1 el freno
 		
-		bandera_SW2 = 0; //CONFIRMAR QUE ES AQUÍ!
-		tiempo_referencia_abierto_SW2=milis();
+		bandera_SW2 = 0; 
+		tiempo_referencia_abierto_SW2=millis();
 	}
 	
 }
 
-void FuncionaLed(){
-	P_L2 |= ( 1 << B_L2);
-	P_L2 |= ( 1 << B_L2);
-	P_L2 |= ( 1 << B_L2);
-	P_L2 |= ( 1 << B_L2);
-	//P_L2 &= ~( 1 << B_L2);
-	/*
-	milisNoFunciona=milis();
-	if (milisNoFunciona>10000){
-		// P_L2 |= ( 1 << B_L2);
-		P_L2 &= ~( 1 << B_L2);
-	} else if (milisNoFunciona>5000) {
-		P_L2 |= ( 1 << B_L2);
-		HeEntradoEnElIf = 1;
-	}
-	*/
-	/*
-		milisNoFunciona=milis();
-		if ((!ledEncendido)&& ((milisNoFunciona - tLed) > 500)) {
-			P_L2 |= (1 << B_L2);      // Encender LED
-			tLed = milis();           // Guardar tiempo de encendido
-			ledEncendido = true;      // Marcar que está encendido
-		}
-		else {
-			if (milisNoFunciona - tLed > 500){ // Comprobar si han pasado 50 ms
-				P_L2 &= ~(1 << B_L2); // Apagar LED
-				ledEncendido = false; // Resetear flag para permitir otro ciclo
-				tLed = milis();
-			}
-		}
-	*/
-	
-}
 
-void EncenderLed(){
-	 P_L2 |= ( 1 << B_L2);
-	 //P_L2 &= ~( 1 << B_L2);
-}
 
-void FuncionaMotor(){ //int tiempo_motor = 0;
 
-//tiempo_motor = milis();
 
-//((Valor_PINB & (1 << B_SO2)) >> B_SO2)
-// ((PIN_SW2 >> B_SW2) & 1) == 1
-	if((((PIN_SW2 >> B_SW2) & 1) == 0) /*|| (tiempo_motor - 2000 > 0)*/ ){
-		P_BK1 |= ( 1 << B_BK1);
-		P_L2 &= ~(1 << B_L2);
-	} else {
-		P_BK1 &= ~( 1 << B_BK1);
-		P_L2 |= (1 << B_L2);
-		
-	}
-	
-}
 	
 
-void setup(){
+void setupMonedero(){
 	
 	
 	// Deshabilitar interrupciones
@@ -377,8 +196,6 @@ void setup(){
 	DDRL |= (1 << B_L2);
 	
 	// Configurar Sensores Opticos como Entradas ( "0" )
-	//DDRB &= ~(1 << B_SO2);
-	//DDRB &= ~(1 << B_SO3);
 	
 	DDRL &= ~(1 << B_SO2);
 	DDRL &= ~(1 << B_SO3);
@@ -390,8 +207,7 @@ void setup(){
 	DDRL |= (1 << B_EN1);	
 	DDRL |= (1 << B_BK1);
 	
-	// Activamos el freno dinamico, ya que en todo el transcurso esta encendido; nunca se apaga
-	//P_BK1 |= (1 << B_BK1);
+	
 	//Activamos el ENABLE, ya que en todo el transcurso esta encendido; nunca se apaga
 	P_EN1 |= (1 << B_EN1);
 	//Inicializamos a 1 el freno dinamico
@@ -413,18 +229,16 @@ void setup(){
 	// Habilitar mascara sensor mecanico
 	EIMSK |= (1 << B_SW2);
 
-	// TCCR3A X X X X X X 0 0 
-	// TCCR3B X X X 0 1 X X X
+
 	// Timer 3 en modo CTC (Top OCRnA)
-	TCCR3A &= ~(1 << WGM30);  
-	TCCR3A &= ~(1 << WGM31);
-	TCCR3B |= (1 << WGM32);
-	TCCR3B &= ~(1 << WGM33);
+	//TCCR3A &= ~(1 << WGM30);  
+	//TCCR3A &= ~(1 << WGM31);
+	//TCCR3B |= (1 << WGM32);
+	//TCCR3B &= ~(1 << WGM33);
 	
 	// Timer 4 y 5 tambien en modo CTC (Top OCRnA)
 	TCCR4A &= ~(1 << WGM40);
 	TCCR4A &= ~(1 << WGM41);
-	//TCCR4B |= (1 << WGM42);
 	TCCR4B &= ~(1 << WGM42);
 	TCCR4B &= ~(1 << WGM43);
 	
@@ -435,9 +249,9 @@ void setup(){
 	
 	
 	// Mascara para no tener preescalado 
-	TCCR3B = (TCCR3B | (1 << CS30));
-	TCCR3B = (TCCR3B & (~(1 << CS31)));
-	TCCR3B = (TCCR3B & (~(1 << CS32)));
+	//TCCR3B = (TCCR3B | (1 << CS30));
+	//TCCR3B = (TCCR3B & (~(1 << CS31)));
+	//TCCR3B = (TCCR3B & (~(1 << CS32)));
 	
 	// Mascara para no tener preescalado tampoco en los timers 4 y 5 
 	TCCR4B = (TCCR4B | (1 << CS40));
@@ -449,24 +263,22 @@ void setup(){
 	TCCR5B = (TCCR5B & (~(1 << CS52)));
 	
 	// Sera el TOP, y vale 8000 porque 125ns*8000=1ms (para la funcion "milis()" )
-	OCR3A = 8000; // **puede que de problema por "perdida de precision", tener cuidado
-	//IGUAL HAY QUE USAR "input capture"...
+	//OCR3A = 8000; 
+
 	
 	OCR4B = 65535;
 	OCR5A = 65535;
-	 // Configuramos la interrupción por OCRA
+
 	 
-	 // ****DUDA****
-	 // ASEGURARNOS DE QUE ES "OCIE3A", ¿por que "A"? ¿es porque estamos usando ocrA? )
+
 	 
 	TIMSK3 |= (1 << OCIE3A);
 	
-	// ES AQUI !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-		TIMSK4 |= (1 << OCIE4B);
-	// ES AQUI !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+	TIMSK4 |= (1 << OCIE4B);
+
 	
-	//TIMSK5 |= (1 << OCIE5A);
-	// Habilitar interrupciones
+
 	
 	// habilitar input capture e inicializar 
 	
@@ -478,7 +290,7 @@ void setup(){
 	TIMSK5 |= (1 << ICIE5);
 	
 	
-	//P_L2 &= ~( 1 << B_L2); // inicio con el led apagado
+	
 	
 	// configurar interrupcion int 1 para que detecte por flanco de subida
 	
@@ -497,20 +309,12 @@ void setup(){
 int main(void)
 {
     // Llamamos a setup 1 vez
-	setup();
+	setupMonedero();
 	
     while (1) 
     {
-		//printf("tiempo_total vale: %ld\n",tiempo_total);
+		
 		Monedero();
-		//FuncionaLed();
-		//FuncionaMotor();		
-		//tLed=milis();
-		//printf("tLed = %ld\n", tLed);
-		//printf("HeEntradoEnElIf = %ld\n", HeEntradoEnElIf);
-		//EncenderLed();
-		//P_L2 |= ( 1 << B_L2);
-		//P_L2 &= ~( 1 << B_L2);
  		ciclo++;
     }
 	
