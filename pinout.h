@@ -1,6 +1,10 @@
 #ifndef PINOUT_H
 #define PINOUT_H
 
+// Funciones para manipular los bits
+#define setBit(port, bit) (port |= (1 << bit))
+#define clrBit(port, bit) (port &= ~(1 << bit))
+
 // Puertos y bits de los motores
 #define P_EN2 PORTK
 #define B_EN2 2

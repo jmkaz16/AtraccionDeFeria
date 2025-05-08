@@ -29,7 +29,7 @@
     <eraseonlaunchrule>0</eraseonlaunchrule>
     <EraseKey />
     <avrtool>com.atmel.avrdbg.tool.avrdragon</avrtool>
-    <avrtoolserialnumber>00A200068227</avrtoolserialnumber>
+    <avrtoolserialnumber>00A20004710A</avrtoolserialnumber>
     <avrdeviceexpectedsignature>0x1E9608</avrdeviceexpectedsignature>
     <com_atmel_avrdbg_tool_avrdragon>
       <ToolOptions>
@@ -39,7 +39,7 @@
         <InterfaceName>JTAG</InterfaceName>
       </ToolOptions>
       <ToolType>com.atmel.avrdbg.tool.avrdragon</ToolType>
-      <ToolNumber>00A200068227</ToolNumber>
+      <ToolNumber>00A20004710A</ToolNumber>
       <ToolName>AVR Dragon</ToolName>
     </com_atmel_avrdbg_tool_avrdragon>
     <avrtoolinterface>JTAG</avrtoolinterface>
@@ -136,7 +136,16 @@
     </ToolchainSettings>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="atraccion.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="atraccion.h">
+      <SubType>compile</SubType>
+    </Compile>
     <Compile Include="main.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="pinout.h">
       <SubType>compile</SubType>
     </Compile>
   </ItemGroup>
