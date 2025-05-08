@@ -1,6 +1,6 @@
 #include "monedero.h"
 
-volatile long int tiempo_total = 0;  // guarda el tiempo total desde el reset para que milis() acceda a ella
+// volatile long int tiempo_total = 0;  // guarda el tiempo total desde el reset para que milis() acceda a ella
 
 uint8_t Valor_PINB = 0b00000000;  // "valor previo" del PINB
 
@@ -22,7 +22,6 @@ volatile bool valido = 0;   // si la moneda que entra esta en un rango aceptable
 // Variables del "monedero" main
 uint32_t tiempo_referencia_L2 = 0;  // temporizador auxiliar para ver cuanto tiempo lleva encendido el led L2, ya que queremos que este encendido solo 1000 ms
 bool enable_L2 = 0;                 // similar a "SO2_flanco": es una "bandera"
-int personas_cnt = 0;               //**IMPORTANTE** Hablarla con todos, para que la usen en Integracion
 
 uint32_t tiempo_referencia_abierto_SW2 = 0;     //*Modificar*// // contador de cuantos milisegundos lleva abierto el Switch
 uint32_t tiempo_referencia_cerrandose_SW2 = 0;  //*Modificar*//
@@ -88,6 +87,9 @@ ISR(TIMER5_CAPT_vect) {
         if ((r > 1.28) && (r < 1.35)) {  // 1<r<1.1
             dinero = dinero + 1;
 
+        } else if ((r > 1.36) && (r < 1.5)) {  // 1.15<r<1.25
+            dinero = dinero + 0.5;
+
         }
 
         else if ((r > 1.2) && (r < 1.28)) {  // 0.85<r<0.95
@@ -139,7 +141,7 @@ void monedero() {
     }
 }
 
-void setupMonedero() {
+void monederoSetup() {
     // Deshabilitar interrupciones
     cli();
 

@@ -1,4 +1,4 @@
-#ifndefn MONEDERO_H
+#ifndef MONEDERO_H
 #define MONEDERO_H
 
 #include <avr/interrupt.h>
@@ -8,8 +8,11 @@
 #include <stdio.h>
 
 #include "pinout.h"
+#include "tarjetero.h"
 
-void setupMonedero();
+extern volatile uint8_t personas_cnt;
+
+void monederoSetup();
 void monedero();
 
 ISR(INT1_vect);
