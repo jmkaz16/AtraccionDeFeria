@@ -125,7 +125,7 @@ void moverAtraccion() {
 				t_subida_cnt = 0;        // Reiniciar contador de tiempo de subida				
 			}
 		}else{
-			if(t_subida_cnt >= t_subida-90){
+			if(t_subida_cnt >= t_subida-60){
 				PINK |= (1 << B_DI2);                 // Cambiar sentido de giro del motor (hace toggle)
 				t_subida += dientes_cnt * t_dientes2;
 				cli();                                // Deshabilitar interrupciones globales
