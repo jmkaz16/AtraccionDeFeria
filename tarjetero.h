@@ -8,22 +8,22 @@
 
 #include "pinout.h"
 
-#define NUM_TIEMPOS 54
-#define NUM_BITS 24
-#define NUM_CARACTERES 6
-#define MAX_TARJETAS 10
-#define INDEX_TABLA 16
+#define NUM_TIEMPOS 54    // numero de flancos a leer en la tarjeta
+#define NUM_BITS 24       // numero de bits en la tarjeta
+#define NUM_CARACTERES 6  // numero de caracteres en la tarjeta
+#define MAX_TARJETAS 10   // numero maximo de tarjetas a guardar
+#define INDEX_TABLA 16    // numero de caracteres en la tabla de codigos
 
 extern volatile uint8_t personas_cnt;
 
-void tarjeteroSetup();
-ISR(TIMER1_CAPT_vect);
-ISR(TIMER1_OVF_vect);
-ISR(TIMER3_COMPA_vect);
-uint32_t millis();
-void procesarTarjeta();
-void conversorBits2Numero(volatile uint8_t* vector, char* tarjeta);
-uint8_t tarjetaValida(const char* t);
-void gestionarTarjeta();
+void tarjeteroSetup();                                               // configuracion de entradas, salidas, interrupciones y temporizadores de tarjetero
+ISR(TIMER1_CAPT_vect);                                               // ISR del input capture del TIMER1
+ISR(TIMER1_OVF_vect);                                                // ISR del desbordamiento del TIMER1
+ISR(TIMER3_COMPA_vect);                                              // ISR del TIMER3 para el millis
+uint32_t millis();                                                   // funcion que devuelve el tiempo en milisegundos desde que se inicializo el timer
+void procesarTarjeta();                                              // funcion que procesa la tarjeta leida
+void conversorBits2Numero(volatile uint8_t* vector, char* tarjeta);  // funcion que convierte los bits de vector bit en la cadena de caracteres
+uint8_t tarjetaValida(const char* t);                                // funcion que verifica si la tarjeta es valida
+void gestionarTarjeta();                                             // funcion que gestiona la tarjeta leida y la compara con la lista de usuarios
 
 #endif  // TARJETERO_H

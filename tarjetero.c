@@ -1,6 +1,5 @@
 #include "tarjetero.h"
 
-volatile uint8_t flanco = 0;
 volatile uint32_t tiempos[NUM_TIEMPOS];  // vector que guarda los tiempos de los flancos detectados
 volatile uint8_t flanco_index = 0;       // indice para guardar el numero de flancos
 volatile uint8_t captura_completa = 0;   // 1 cuando ha leido una tarjeta
@@ -53,6 +52,7 @@ void tarjeteroSetup() {
     sei();
 }
 
+// ISR del input capture del TIMER1
 ISR(TIMER1_CAPT_vect) {
     if (flanco_index < (NUM_TIEMPOS - 2)) {
         tiempo = ((uint32_t)desbordamiento << 16) | ICR1;
@@ -67,18 +67,22 @@ ISR(TIMER1_CAPT_vect) {
     }
 }
 
+// ISR del desbordamiento del TIMER1
 ISR(TIMER1_OVF_vect) {
     desbordamiento++;
 }
 
+// ISR del TIMER3 para el millis
 ISR(TIMER3_COMPA_vect) {
     tiempo_total++;
 }
 
+// Funcion que devuelve el tiempo en milisegundos desde que se inicializo el timer
 uint32_t millis() {
     return tiempo_total;
 }
 
+// Funcion que procesa la tarjeta leida
 void procesarTarjeta() {
     if (!captura_completa) return;
 
@@ -119,6 +123,7 @@ void conversorBits2Numero(volatile uint8_t* vector, char* tarjeta) {
     tarjeta[NUM_CARACTERES] = '\0';  // Finaliza la cadena de caracteres de la tarjeta
 }
 
+// Funcion que comprueba si la tarjeta es valida
 uint8_t tarjetaValida(const char* tarjeta_valida) {
     for (uint8_t i = 0; i < 6; i++) {
         if (tarjeta_valida[i] == '?' || tarjeta_valida[i] == '\0') {
@@ -133,6 +138,7 @@ uint8_t tarjetaValida(const char* tarjeta_valida) {
     }
 }
 
+// Funcion que verifica si la tarjeta se encuentra en la lista de usuarios
 void gestionarTarjeta() {
     uint32_t tiempo_inicial = 0;
     uint32_t tiempo_actual = 0;
