@@ -9,7 +9,7 @@ volatile uint32_t tiempo_total = 0;      // contador de  milisegundos que devuel
 
 volatile uint8_t valores[NUM_BITS] = {0};  // vector que guarda los bits de la tarjeta
 
-char tarjeta[NUM_CARACTERES]];  // codigo de caracteres de la tarjeta
+char tarjeta[NUM_CARACTERES];  // codigo de caracteres de la tarjeta
 
 char usuarios[MAX_TARJETAS][NUM_CARACTERES] = {":+097-"};  // tarjetas guardadas
 volatile uint8_t num_usuarios = 1;                         // numero de tarjetas guardadas inicialmente
