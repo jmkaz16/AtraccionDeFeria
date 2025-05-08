@@ -156,6 +156,12 @@
     <Compile Include="main.c">
       <SubType>compile</SubType>
     </Compile>
+    <Compile Include="monedero.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="monedero.h">
+      <SubType>compile</SubType>
+    </Compile>
     <Compile Include="pinout.h">
       <SubType>compile</SubType>
     </Compile>
