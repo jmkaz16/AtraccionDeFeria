@@ -17,7 +17,7 @@
 #define MONEDA20_MAX 1.295
 
 #define MONEDA50_MIN 1.355
-#define MONEDA50_MAX 1.46
+#define MONEDA50_MAX 1.47
 
 #define MONEDA100_MIN 1.305
 #define MONEDA100_MAX 1.34
@@ -26,6 +26,7 @@ extern volatile uint8_t personas_cnt;
 
 void monederoSetup();
 void monedero();
+void monedero_emergencia();
 
 ISR(INT1_vect);
 

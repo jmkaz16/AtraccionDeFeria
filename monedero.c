@@ -106,6 +106,13 @@ ISR(TIMER5_CAPT_vect) {
 ISR(TIMER4_COMPB_vect) {
     overflows_timers++;
 }
+void monedero_emergencia(){
+	P_L2 &= ~(1 << B_L2);
+	P_BK1 |= (1 << B_BK1);
+	TIMSK4 &=~(1 << ICIE4);
+	TIMSK5 &=~(1 << ICIE5);
+	
+}
 
 void monedero() {
     if (dinero >= 1.20) {
