@@ -22,8 +22,8 @@ void tarjeteroSetup() {
     cli();
 
     // LED en B_L1 como salida
-    //DDRL |= (1 << B_L1);
-   // PORTL &= ~(1<<PL7);
+    // DDRL |= (1 << B_L1);
+    // PORTL &= ~(1<<PL7);
 
     // PD4 como entrada para input capture
     DDRD &= ~(1 << PD4);
@@ -150,12 +150,12 @@ void gestionarTarjeta() {
         do {
             tiempo_actual = millis();
             if ((tiempo_actual - tiempo_inicial) % 200 < 100) {  // Entre 200 porque es el periodo: 100 encendido y 100 apagado
-                PORTL |= (1<<PL7);                              // LED ON
+                PORTL |= (1 << PL7);                             // LED ON
             } else {
-                PORTL &= ~(1<<PL7);  // LED OFF
+                PORTL &= ~(1 << PL7);  // LED OFF
             }
         } while (tiempo_actual - tiempo_inicial < 1000);
-        PORTL &= ~(1<<PL7);  // Apagamos LED definitivamente
+        PORTL &= ~(1 << PL7);  // Apagamos LED definitivamente
 
     } else {
         // Comprobamos si la tarjeta esta en la lista de usuarios
@@ -176,10 +176,10 @@ void gestionarTarjeta() {
         }
 
         tiempo_inicial = millis();
-        PORTL |= (1<<PL7);  // Encendemos led
+        PORTL |= (1 << PL7);  // Encendemos led
         do {
             tiempo_actual = millis();
         } while (tiempo_actual - tiempo_inicial < duracion_espera);  // Apaga tanto si encontrada como no, varian solo los segundos
-        PORTL &= ~(1<<PL7);
+        PORTL &= ~(1 << PL7);
     }
 }

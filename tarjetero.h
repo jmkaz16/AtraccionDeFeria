@@ -23,7 +23,7 @@ ISR(TIMER3_COMPA_vect);                                              // ISR del 
 uint32_t millis();                                                   // funcion que devuelve el tiempo en milisegundos desde que se inicializo el timer
 void procesarTarjeta();                                              // funcion que procesa la tarjeta leida
 void conversorBits2Numero(volatile uint8_t* vector, char* tarjeta);  // funcion que convierte los bits de vector bit en la cadena de caracteres
-uint8_t tarjetaValida(const char* tarjeta_valida);                                // funcion que verifica si la tarjeta es valida
+uint8_t tarjetaValida(const char* tarjeta_valida);                   // funcion que verifica si la tarjeta es valida
 void gestionarTarjeta();                                             // funcion que gestiona la tarjeta leida y la compara con la lista de usuarios
 
 #endif  // TARJETERO_H

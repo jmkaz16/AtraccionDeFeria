@@ -1,13 +1,5 @@
 #include "atraccion.h"
 
-// Hay que modificar las constantes con defines para organizar el codigo
-// También añadir como #define los tiempos de antirrebotes
-
-// quiero añadir un vector muy grande que vaya almacenando los tiempos de cada diente para luego visualizarlo
-// volatile int64_t dientes_vector[1000];  // Vector para almacenar los tiempos de cada diente
-// volatile uint16_t pointer = 0;           // Puntero para el vector de dientes
-// volatile uint16_t t_entredientes_cnt = 0;         // Contador de tiempo entre dientes en milisegundos
-
 uint16_t t_total = 0;                // Tiempo total de parpadeo en decimas de segundo
 uint16_t t_encendido = 0;            // Tiempo de parpadeo en decimas de segundo
 volatile uint16_t parpadeo_cnt = 0;  // Contador de parpadeo en decimas de segundo
@@ -33,9 +25,6 @@ volatile uint16_t atraccion_cnt = 0;  // Contador de duracion de la atraccion en
 volatile uint16_t dientes_cnt = 0;   // Contador de dientes del engranaje
 volatile uint16_t t_subida_cnt = 0;  // Contador de tiempo de subida en milisegundos
 uint16_t t_subida = 0;               // Tiempo de subida en milisegundos
-
-// uint16_t t_subida_f2 = 850;
-// uint16_t t_dientes3 = 0.25;
 
 // Configuracion de entradas, salidas, interrupciones y temporizadores de la atraccion
 void atraccionSetup() {
@@ -125,13 +114,13 @@ void setAtraccion() {
     atraccion_flag = true;                                                           // Activar bandera de movimiento de la atraccion
     setParpadeo(500, 500);                                                           // Mantener el LED 4 encendido
     cli();                                                                           // Deshabilitar interrupciones globales
-    EIMSK |= (1 << B_SO4) | (1 << B_SO5);  // Habilitar mascara de interrupcion por sensores opticos
-    sei();                                 // Habilitar interrupciones globales
+    EIMSK |= (1 << B_SO4) | (1 << B_SO5);                                            // Habilitar mascara de interrupcion por sensores opticos
+    sei();                                                                           // Habilitar interrupciones globales
 }
 
 // Desactivar la atraccion
 void clrAtraccion() {
-    clrBit(P_EN2, B_EN2);  // Apagar motor
+    clrBit(P_EN2, B_EN2);                     // Apagar motor
     EIMSK &= ~((1 << B_SO4) | (1 << B_SO5));  // Deshabilitar mascara de interrupcion por sensores opticos
     atraccion_flag = false;                   // Desactivar bandera de movimiento de la atraccion
     atraccion_cnt = 0;                        // Reiniciar contador de duracion de la atraccion
@@ -148,16 +137,16 @@ void moverAtraccion() {
                 PINK |= (1 << B_DI2);                 // Cambiar sentido de giro del motor (hace toggle)
                 t_subida += dientes_cnt * T_DIENTES;  // Incrementar tiempo de subida
                 cli();                                // Deshabilitar interrupciones globales
-                EIMSK &= ~(1 << B_SO4);  // Deshabilitar mascara de interrupcion para el sensor optico 4 (dientes)
-                sei();                   // Habilitar interrupciones globales
-                dientes_cnt = 0;         // Reiniciar contador de dientes
-                t_subida_cnt = 0;        // Reiniciar contador de tiempo de subida
+                EIMSK &= ~(1 << B_SO4);               // Deshabilitar mascara de interrupcion para el sensor optico 4 (dientes)
+                sei();                                // Habilitar interrupciones globales
+                dientes_cnt = 0;                      // Reiniciar contador de dientes
+                t_subida_cnt = 0;                     // Reiniciar contador de tiempo de subida
             }
         } else {  // if(t_subida < t_subida_f2)
             if (t_subida_cnt >= t_subida - 150) {
                 PINK |= (1 << B_DI2);  // Cambiar sentido de giro del motor (hace toggle)
                 t_subida += dientes_cnt * T_DIENTES_F1;
-                cli();  // Deshabilitar interrupciones globales
+                cli();                   // Deshabilitar interrupciones globales
                 EIMSK &= ~(1 << B_SO4);  // Deshabilitar mascara de interrupcion para el sensor optico 4 (dientes)
                 sei();                   // Habilitar interrupciones globales
                 dientes_cnt = 0;         // Reiniciar contador de dientes
@@ -192,9 +181,9 @@ void parpadeo() {
 // ISR del pulsador de emergencia SW1 (INT0)
 ISR(INT0_vect) {
     clrAtraccion();
-    setParpadeo(200, 1000);  // Encender 200ms y apagar 1000ms
+    setParpadeo(200, 1000);                                  // Encender 200ms y apagar 1000ms
     EIMSK &= ~((1 << B_SO4) | (1 << B_SO5) | (1 << B_SW1));  // Deshabilitar mascara de interrupcion por sensores opticos y mecanico
-	clrAtraccion();		// Desactiva la atraccion
+    clrAtraccion();                                          // Desactiva la atraccion
     emergencia_flag = true;                                  // Activar bandera de emergencia
 }
 
@@ -224,8 +213,13 @@ ISR(PCINT2_vect) {
     estado_sw3 = PINK & (1 << B_SW3);                           // Leer el estado del sensor mecánico SW3
     if ((estado_sw3 ^ last_estado_sw3) && (estado_sw3 == 0)) {  // Si el sensor mecánico SW3 tiene un flanco de bajada
         if (t_sw3_cnt >= T_ANTIRREBOTES) {                      // Si el tiempo de activacion del sensor mecanico SW3 es mayor a 10ms
-            personas_cnt++;                                     // Incrementar contador de personas en la atraccion
-            t_sw3_cnt = 0;                                      // Reiniciar contador de tiempo de antirrebotes
+            // personas_cnt++;                                     // Incrementar contador de personas en la atraccion
+            if (controller_flag) {
+                controller_flag = false;  // Desactivar bandera de controlador
+            } else {
+                controller_flag = true;  // Activar bandera de controlador
+            }
+            t_sw3_cnt = 0;  // Reiniciar contador de tiempo de antirrebotes
         }
     }
     last_estado_sw3 = estado_sw3;  // Guardar el estado actual del sensor mecánico SW3

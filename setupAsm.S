@@ -41,7 +41,7 @@ setupAsm:
 	andi r16, 0b11111101
 	sts P_L4, r16
 
-; Configuro las señales del motor M2 como salidas. EN2 en PORTK el bit 2 y DI2 en PORTK el bit 3
+; Configuro las seï¿½ales del motor M2 como salidas. EN2 en PORTK el bit 2 y DI2 en PORTK el bit 3
 	lds r16, DDRK
 	ori r16, 0b00000100
 	sts DDRK, r16
