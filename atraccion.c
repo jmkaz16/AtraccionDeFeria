@@ -157,7 +157,7 @@ void moverAtraccion() {
                 t_subida_cnt = 0;        // Reiniciar contador de tiempo de subida
             }
         } else {  // if(t_subida < t_subida_f2)
-            if (t_subida_cnt >= t_subida - 100) {
+            if (t_subida_cnt >= t_subida - 150) {
                 PINK |= (1 << B_DI2);  // Cambiar sentido de giro del motor (hace toggle)
                 t_subida += dientes_cnt * T_DIENTES_F1;
                 cli();  // Deshabilitar interrupciones globales
@@ -167,17 +167,6 @@ void moverAtraccion() {
                 dientes_cnt = 0;         // Reiniciar contador de dientes
                 t_subida_cnt = 0;        // Reiniciar contador de tiempo de subida
             }
-            /*}else{
-                    if(t_subida_cnt >= t_subida-100){
-                            PINK |= (1 << B_DI2);                 // Cambiar sentido de giro del motor (hace toggle)
-                            t_subida += dientes_cnt * t_dientes3;
-                            cli();                                // Deshabilitar interrupciones globales
-                            // TIMSK0 &= ~(1 << OCIE0A);             // Deshabilitar interrupcion por OCRA del Timer 0
-                            EIMSK &= ~(1 << B_SO4);  // Deshabilitar mascara de interrupcion para el sensor optico 4 (dientes)
-                            sei();                   // Habilitar interrupciones globales
-                            dientes_cnt = 0;         // Reiniciar contador de dientes
-                            t_subida_cnt = 0;        // Reiniciar contador de tiempo de subida
-                    }*/
         }
     } else {
         clrBit(P_EN2, B_EN2);  // Para asegurarse que el motor se para

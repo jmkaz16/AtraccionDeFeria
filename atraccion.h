@@ -16,12 +16,12 @@
 #define T_ANTIRREBOTES 2  // Tiempo de antirrebotes en milisegundos
 
 #define PERSONAS_MAX 4  // Maximo de personas en la atraccion
-#define T_ESPERA 100    // Tiempo de espera en decimas de segundo (10)
+#define T_ESPERA 10    // Tiempo de espera en decimas de segundo (10)
 
 #define T_SUBIDA_MIN 600   // Tiempo de subida minimo en milisegundos en la fase 0
-#define T_SUBIDA_F1 725    // Tiempo de subida minimo en milisegundos en la fase 1
+#define T_SUBIDA_F1 750    // Tiempo de subida minimo en milisegundos en la fase 1
 #define T_DIENTES 5        // Tiempo por diente en milisegundos en la fase 0
-#define T_DIENTES_F1 -0.5  // Tiempo por diente en milisegundos en la fase 1
+#define T_DIENTES_F1 0.5 // Tiempo por diente en milisegundos en la fase 1
 
 extern volatile bool emergencia_flag;  // bandera de emergencia
 
