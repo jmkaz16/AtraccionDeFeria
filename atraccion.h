@@ -9,6 +9,7 @@
 #include <time.h>
 
 #include "pinout.h"
+#include "monedero.h"
 
 #define T_ATRACCION_MAX 20 * 60  // Tiempo maximo de duracion de la atraccion en decimas de segundo
 #define T_ATRACCION_MIN 300      // Tiempo minimo de duracion de la atraccion en decimas de segundo

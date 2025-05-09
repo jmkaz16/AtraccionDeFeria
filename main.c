@@ -16,23 +16,20 @@ extern void setupAsm(void);
 volatile bool emergencia_flag = false;  // Bandera de emergencia
 
 void setup() {
-						 atraccionSetup();  // Configuracion inicial de la atraccion
-                        tarjeteroSetup();  // Configuracion inicial del tarjetero
+	atraccionSetup();  // Configuracion inicial de la atraccion
+    tarjeteroSetup();  // Configuracion inicial del tarjetero
     monederoSetup();   // Configuracion inicial del monedero
+	setupAsm();
 }
 
 int main(void) {
     setup();
-	setupAsm();
- 	//PORTK |= (1 << 0);
-
      while (1) {
          if (!emergencia_flag) {
             atraccion();        // Llamar a la funcion de la atraccion
             procesarTarjeta();  // Llamar a la funcion de procesar tarjeta
-             //monedero();         // Llamar a la funcion de monedero
+            monedero();         // Llamar a la funcion de monedero
         }
- 
          parpadeo();  // Llamar a la funcion de parpadeo
      }
 }

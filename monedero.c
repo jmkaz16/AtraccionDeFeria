@@ -86,12 +86,12 @@ ISR(TIMER5_CAPT_vect) {	  // SO3 detecta la moneda cayendo
     }
 }
 
-// metodo por el que el contador overflows_timers aumenta
+// Metodo por el que el contador overflows_timers aumenta
 ISR(TIMER4_COMPB_vect) {
     overflows_timers++;
 }
 
-// en caso de querer hacer clear, se apaga el led, se frena la barrera, y se deshabilitan las interrupciones
+// Deshabilita monedero: se apaga el led, se frena la barrera, y se deshabilitan las interrupciones
 void clearMonedero(){
 	P_L2 &= ~(1 << B_L2);
 	P_BK1 |= (1 << B_BK1);
@@ -100,7 +100,7 @@ void clearMonedero(){
 	
 }
 
-// flujo principal de la funcion
+// Flujo principal de la funcion
 void monedero() {
 	
     if (dinero >= 1.20) {		// si el dinero pagado por 1 persona supera cierto valor, reseteamos el dinero,

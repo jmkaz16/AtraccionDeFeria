@@ -12,7 +12,7 @@ uint16_t t_total = 0;                // Tiempo total de parpadeo en decimas de s
 uint16_t t_encendido = 0;            // Tiempo de parpadeo en decimas de segundo
 volatile uint16_t parpadeo_cnt = 0;  // Contador de parpadeo en decimas de segundo
 
-volatile uint16_t personas_cnt = 0;  // Contador de personas en la atraccion
+volatile uint8_t personas_cnt = 0;  // Contador de personas en la atraccion
 
 volatile uint16_t t_sw3_cnt = 0;  // Contador de tiempo para antirrebotes del sw3 en decimas de segundo
 volatile uint8_t estado_sw3 = 1;
@@ -42,13 +42,13 @@ void atraccionSetup() {
     // Deshabilitar interrupciones
     cli();
 
-    // Configurar LEDs como salida
+    /*// Configurar LEDs como salida
     DDRK |= (1 << B_L3);
     DDRK |= (1 << B_L4);
 
     // Configurar motores como salida
     DDRK |= (1 << B_EN2);
-    DDRK |= (1 << B_DI2);
+    DDRK |= (1 << B_DI2);*/
 
     // Configurar interrupcion INT0 (flanco de bajada)
     EICRA &= ~(1 << 2 * B_SW1);
@@ -125,7 +125,6 @@ void setAtraccion() {
     atraccion_flag = true;                                                           // Activar bandera de movimiento de la atraccion
     setParpadeo(500, 500);                                                           // Mantener el LED 4 encendido
     cli();                                                                           // Deshabilitar interrupciones globales
-    // TIMSK0 |= (1 << OCIE0A);                                                         // Habilitar interrupcion por OCRA
     EIMSK |= (1 << B_SO4) | (1 << B_SO5);  // Habilitar mascara de interrupcion por sensores opticos
     sei();                                 // Habilitar interrupciones globales
 }
@@ -133,7 +132,6 @@ void setAtraccion() {
 // Desactivar la atraccion
 void clrAtraccion() {
     clrBit(P_EN2, B_EN2);  // Apagar motor
-    // TIMSK0 &= ~(1 << OCIE0A);                 // Deshabilitar interrupcion por OCRA del Timer 0
     EIMSK &= ~((1 << B_SO4) | (1 << B_SO5));  // Deshabilitar mascara de interrupcion por sensores opticos
     atraccion_flag = false;                   // Desactivar bandera de movimiento de la atraccion
     atraccion_cnt = 0;                        // Reiniciar contador de duracion de la atraccion
@@ -150,7 +148,6 @@ void moverAtraccion() {
                 PINK |= (1 << B_DI2);                 // Cambiar sentido de giro del motor (hace toggle)
                 t_subida += dientes_cnt * T_DIENTES;  // Incrementar tiempo de subida
                 cli();                                // Deshabilitar interrupciones globales
-                // TIMSK0 &= ~(1 << OCIE0A);             // Deshabilitar interrupcion por OCRA del Timer 0
                 EIMSK &= ~(1 << B_SO4);  // Deshabilitar mascara de interrupcion para el sensor optico 4 (dientes)
                 sei();                   // Habilitar interrupciones globales
                 dientes_cnt = 0;         // Reiniciar contador de dientes
@@ -161,7 +158,6 @@ void moverAtraccion() {
                 PINK |= (1 << B_DI2);  // Cambiar sentido de giro del motor (hace toggle)
                 t_subida += dientes_cnt * T_DIENTES_F1;
                 cli();  // Deshabilitar interrupciones globales
-                // TIMSK0 &= ~(1 << OCIE0A);             // Deshabilitar interrupcion por OCRA del Timer 0
                 EIMSK &= ~(1 << B_SO4);  // Deshabilitar mascara de interrupcion para el sensor optico 4 (dientes)
                 sei();                   // Habilitar interrupciones globales
                 dientes_cnt = 0;         // Reiniciar contador de dientes
@@ -197,8 +193,8 @@ void parpadeo() {
 ISR(INT0_vect) {
     clrAtraccion();
     setParpadeo(200, 1000);  // Encender 200ms y apagar 1000ms
-    // TIMSK0 &= ~(1 << OCIE0A);                                // Deshabilitar interrupcion por OCRA del Timer 0
     EIMSK &= ~((1 << B_SO4) | (1 << B_SO5) | (1 << B_SW1));  // Deshabilitar mascara de interrupcion por sensores opticos y mecanico
+	clrAtraccion();		// Desactiva la atraccion
     emergencia_flag = true;                                  // Activar bandera de emergencia
 }
 
@@ -217,7 +213,6 @@ ISR(INT3_vect) {
             clrAtraccion();  // Desactivar atraccion
             t_s05_cnt = 0;
         } else {
-            // TIMSK0 |= (1 << OCIE0A);  // Habilitar interrupcion por OCRA del Timer 0
             EIMSK |= (1 << B_SO4);  // Habilitar mascara de interrupcion para el sensor optico 4 (dientes)
             t_s05_cnt = 0;
         }
