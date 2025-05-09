@@ -8,25 +8,31 @@
 #include "atraccion.h"
 #include "monedero.h"
 #include "tarjetero.h"
+#include "pinout.h"
+
+
+extern void setupAsm(void);
 
 volatile bool emergencia_flag = false;  // Bandera de emergencia
 
 void setup() {
-						// atraccionSetup();  // Configuracion inicial de la atraccion
+						 atraccionSetup();  // Configuracion inicial de la atraccion
                         tarjeteroSetup();  // Configuracion inicial del tarjetero
     monederoSetup();   // Configuracion inicial del monedero
 }
 
 int main(void) {
     setup();
-    setupAsm();
-    while (1) {
-        if (!emergencia_flag) {
+	setupAsm();
+ 	//PORTK |= (1 << 0);
+
+     while (1) {
+         if (!emergencia_flag) {
             atraccion();        // Llamar a la funcion de la atraccion
             procesarTarjeta();  // Llamar a la funcion de procesar tarjeta
-            monedero();         // Llamar a la funcion de monedero
+             //monedero();         // Llamar a la funcion de monedero
         }
-
-        parpadeo();  // Llamar a la funcion de parpadeo
-    }
+ 
+         parpadeo();  // Llamar a la funcion de parpadeo
+     }
 }

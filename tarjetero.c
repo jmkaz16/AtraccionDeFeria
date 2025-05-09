@@ -22,8 +22,8 @@ void tarjeteroSetup() {
     cli();
 
     // LED en B_L1 como salida
-    DDRL |= (1 << B_L1);
-    PORTL &= ~(1<<PL7);
+    //DDRL |= (1 << B_L1);
+   // PORTL &= ~(1<<PL7);
 
     // PD4 como entrada para input capture
     DDRD &= ~(1 << PD4);

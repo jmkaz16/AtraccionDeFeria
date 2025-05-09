@@ -44,6 +44,5 @@
 #define P_L4 PORTK
 #define B_L4 1
 
-extern void setupAsm ();
 
 #endif  // PINOUT_H
