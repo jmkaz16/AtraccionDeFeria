@@ -12,15 +12,17 @@
 
 volatile bool emergencia_flag = false;  // Bandera de emergencia
 
+//char data='0';
+
 void setup() {
-    // atraccionSetup();  // Configuracion inicial de la atraccion
-    // tarjeteroSetup();  // Configuracion inicial del tarjetero
-    // monederoSetup();   // Configuracion inicial del monedero
+    atraccionSetup();  // Configuracion inicial de la atraccion
+    tarjeteroSetup();  // Configuracion inicial del tarjetero
+    monederoSetup();   // Configuracion inicial del monedero
     uartSetup();  // Configuracion inicial del UART
 }
 
 int main(void) {
-    setup();
+     setup();
     while (1) {
         /*if (!emergencia_flag) {
             atraccion();        // Llamar a la funcion de la atraccion
@@ -29,6 +31,7 @@ int main(void) {
         }
 
         parpadeo();  // Llamar a la funcion de parpadeo*/
-        uartReceive();  // Recibir dato por UART
+        decodeData(uartReceive());  // Recibir dato por UART
+		//int clau = 2;
     }
 }

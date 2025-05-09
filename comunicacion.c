@@ -1,14 +1,13 @@
 #include "comunicacion.h"
 
-char data = '0';
 
 // Configura el UART para comunicacion serial
 void uartSetup() {
     cli();  // Deshabilitar interrupciones globales
 
     // Configurar el baud rate
-    UBRR0H = (unsigned char)(UBRR >> 8);  // Parte alta
-    UBRR0L = (unsigned char)UBRR;         // Parte baja
+    UBRR0H = (unsigned char)(UBRR_VALUE >> 8);  // Parte alta
+    UBRR0L = (unsigned char)UBRR_VALUE;         // Parte baja
 
     // Habilitar  el flag de recepcion (RXEN0)
     UCSR0B |= (1 << RXEN0);
@@ -25,15 +24,17 @@ void uartSetup() {
 }
 
 // Funcion bloqueante para recibir un caracter por UART
-void uartReceive(void) {
+char uartReceive() {
     if ((UCSR0A & (1 << RXC0)))  // Comprueba si ha un dato
     {
-        decodeData();
+        return UDR0;
     }
+		/*while (!(UCSR0A & (1 << RXC0)));  // Esperar hasta que llegue un dato
+		return UDR0;                      // Leer dato recibido*/
 }
 
-void decodeData() {
-    data = UDR0;  // Leer el dato recibido
+
+void decodeData(char data) {
     switch (data) {
         case 'a':
             toggleBit(P_L1, B_L1);  // Cambiar el estado del LED 1
@@ -51,7 +52,7 @@ void decodeData() {
             toggleBit(P_EN2, B_EN2);  // Cambiar el estado del motor 2
             break;
         case 'f':
-            toggleBit(P_DI2, B_DI2);  // Cambiar el estado del sensor de distancia 2
+            toggleBit(P_DI2, B_DI2);  // Cambiar el estado de la direccion del motor 2
             break;
         default:
             // Manejar otros casos
