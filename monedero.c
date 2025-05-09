@@ -106,7 +106,7 @@ ISR(TIMER5_CAPT_vect) {
 ISR(TIMER4_COMPB_vect) {
     overflows_timers++;
 }
-void monedero_emergencia(){
+void clearMonedero(){
 	P_L2 &= ~(1 << B_L2);
 	P_BK1 |= (1 << B_BK1);
 	TIMSK4 &=~(1 << ICIE4);
