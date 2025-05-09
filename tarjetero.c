@@ -1,38 +1,38 @@
 #include "tarjetero.h"
 
-volatile uint8_t flanco = 0;
-volatile uint32_t tiempos[54];  // Guarda cada instante de flanco
-volatile uint8_t flanco_index = 0;
-volatile uint8_t captura_completa = 0;
-volatile uint32_t desbordamiento = 0;
-volatile uint32_t tiempo = 0;
-volatile uint32_t tiempo_total = 0;
+volatile uint32_t tiempos[NUM_TIEMPOS];  // vector que guarda los tiempos de los flancos detectados
+volatile uint8_t flanco_index = 0;       // indice para guardar el numero de flancos
+volatile uint8_t captura_completa = 0;   // 1 cuando ha leido una tarjeta
+volatile uint32_t desbordamiento = 0;    // cuenta de los overflows del timer
+volatile uint32_t tiempo = 0;            // tiempo en el que detecta cada flanco
+volatile uint32_t tiempo_total = 0;      // contador de  milisegundos que devuelve millis()
 
-volatile uint8_t valores[24] = {0};
+volatile uint8_t valores[NUM_BITS] = {0};  // vector que guarda los bits de la tarjeta
 
-char tarjeta[6];
+char tarjeta[NUM_CARACTERES];  // codigo de caracteres de la tarjeta
 
-char usuarios[10][6] = {":+097-"};  // Tarjetas guardadas
-volatile uint8_t num_usuarios = 1;  // Numero de tarjetas guardadas inicialmente
+char usuarios[MAX_TARJETAS][NUM_CARACTERES] = {":+097-"};  // tarjetas guardadas
+volatile uint8_t num_usuarios = 1;                         // numero de tarjetas guardadas inicialmente
 
-char tabla_codigos[16] = {  // Tabla para la decodificacion de bits a caracteres
+char tabla_codigos[INDEX_TABLA] = {  // tabla para la decodificacion de bits a caracteres
     '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '?', '?', '-', '?', '+', ':'};
 
+// Configuracion de entradas, salidas, interrupciones y temporizadores de tarjetero
 void tarjeteroSetup() {
     cli();
 
-    // LED en PL7 como salida
-    DDRL |= (1 << PL7);
-    PORTL &= ~(1 << PL7);
+    // LED en B_L1 como salida
+    DDRL |= (1 << B_L1);
+    clrBit(P_L1, B_L1);
 
     // PD4 como entrada para input capture
     DDRD &= ~(1 << PD4);
 
     // Configuracion TIMER1
     TCCR1A = 0;
-    TCCR1B = (1 << ICES1) | (1 << CS11);  // Flanco de subida inicialmente, prescaler 8
-    TIMSK1 |= (1 << ICIE1);               // Habilitar interrupcion input capture
-    TIMSK1 |= (1 << TOIE1);               // Habilitar interrupcion por desbordamiento
+    TCCR1B = (1 << ICES1) | (1 << CS11);  // flanco de subida inicialmente, prescaler 8
+    TIMSK1 |= (1 << ICIE1);               // habilitar interrupcion input capture
+    TIMSK1 |= (1 << TOIE1);               // habilitar interrupcion por desbordamiento
 
     // Configuracion TIMER 3 para millis
     //  Timer 3 en modo CTC (Top OCRnA)
@@ -54,14 +54,14 @@ void tarjeteroSetup() {
 
 // ISR del input capture del TIMER1
 ISR(TIMER1_CAPT_vect) {
-    if (flanco_index < 52) {
+    if (flanco_index < (NUM_TIEMPOS - 2)) {
         tiempo = ((uint32_t)desbordamiento << 16) | ICR1;
         tiempos[flanco_index] = tiempo;  // Guarda el instante del flanco
         flanco_index++;
         TCCR1B ^= (1 << ICES1);  // parpadea el LED, hay que cambiarlo
-        // PORTL ^= (1 << PL7);            // Cambiar flanco (subida/bajada), hay que cambiarlo
+        // P_L1 ^= (1 << B_L1);            // Cambiar flanco (subida/bajada), hay que cambiarlo
     }
-    if (flanco_index >= 52) {
+    if (flanco_index >= (NUM_TIEMPOS - 2)) {
         captura_completa = 1;     // Senala que ya tenemos una tarjeta leida
         TIMSK1 &= ~(1 << ICIE1);  // Desactivar interrupcion para procesar tranquilo
     }
@@ -72,12 +72,14 @@ ISR(TIMER1_OVF_vect) {
     desbordamiento++;
 }
 
-uint32_t millis() {
-    return tiempo_total;
-}
-
+// ISR del TIMER3 para el millis
 ISR(TIMER3_COMPA_vect) {
     tiempo_total++;
+}
+
+// Funcion que devuelve el tiempo en milisegundos desde que se inicializo el timer
+uint32_t millis() {
+    return tiempo_total;
 }
 
 // Funcion que procesa la tarjeta leida
@@ -94,7 +96,6 @@ void procesarTarjeta() {
     }
 
     conversorBits2Numero(valores, tarjeta);
-    // T(usuarios, tarjeta);
     gestionarTarjeta();
 
     // Reset para proxima tarjeta
@@ -119,14 +120,22 @@ void conversorBits2Numero(volatile uint8_t* vector, char* tarjeta) {
         tarjeta[i] = tabla_codigos[codigo];  // Se guarda el caracter correspondiente al codigo de 4 bits
     }
 
-    tarjeta[6] = '\0';  // Finaliza la cadena de caracteres de la tarjeta
+    tarjeta[NUM_CARACTERES] = '\0';  // Finaliza la cadena de caracteres de la tarjeta
 }
 
-void compararTarjeta(const char* usuario, const char* leida) {
-    if (strcmp(usuario, leida) == 1)
-        PORTL |= (1 << PL7);  // Encender LED si coinciden
-    else
-        PORTL &= ~(1 << PL7);  // Apagar LED si no coinciden
+// Funcion que comprueba si la tarjeta es valida
+uint8_t tarjetaValida(const char* tarjeta_valida) {
+    for (uint8_t i = 0; i < 6; i++) {
+        if (tarjeta_valida[i] == '?' || tarjeta_valida[i] == '\0') {
+            return 0;
+        }  // Menos de 6 caracteres o caracter '?'
+    }
+    if (tarjeta_valida[NUM_CARACTERES] != '\0') {
+        return 0;  // Mas de 6 caracteres
+    } else {
+        personas_cnt++;
+        return 1;
+    }
 }
 
 // Funcion que verifica si la tarjeta se encuentra en la lista de usuarios
@@ -141,12 +150,12 @@ void gestionarTarjeta() {
         do {
             tiempo_actual = millis();
             if ((tiempo_actual - tiempo_inicial) % 200 < 100) {  // Entre 200 porque es el periodo: 100 encendido y 100 apagado
-                PORTL |= (1 << PL7);                             // LED ON
+                setBit(P_L1, B_L1);                              // LED ON
             } else {
-                PORTL &= ~(1 << PL7);  // LED OFF
+                clrBit(P_L1, B_L1);  // LED OFF
             }
         } while (tiempo_actual - tiempo_inicial < 1000);
-        PORTL &= ~(1 << PL7);  // Apagamos LED definitivamente
+        clrBit(P_L1, B_L1);  // Apagamos LED definitivamente
 
     } else {
         // Comprobamos si la tarjeta esta en la lista de usuarios
@@ -167,24 +176,10 @@ void gestionarTarjeta() {
         }
 
         tiempo_inicial = millis();
-        PORTL |= (1 << PL7);  // Encendemos led
+        setBit(P_L1, B_L1);  // Encendemos led
         do {
             tiempo_actual = millis();
         } while (tiempo_actual - tiempo_inicial < duracion_espera);  // Apaga tanto si encontrada como no, varian solo los segundos
-        PORTL &= ~(1 << PL7);
-    }
-}
-
-uint8_t tarjetaValida(const char* t) {
-    for (uint8_t i = 0; i < 6; i++) {
-        if (t[i] == '?' || t[i] == '\0') {
-            return 0;
-        }  // Menos de 6 caracteres o caracter '?'
-    }
-    if (t[6] != '\0') {
-        return 0;  // Mas de 6 caracteres
-    } else {
-        personas_cnt++;
-        return 1;
+        clrBit(P_L1, B_L1);
     }
 }
