@@ -34,7 +34,7 @@
     <com_atmel_avrdbg_tool_avrdragon>
       <ToolOptions>
         <InterfaceProperties>
-          <JtagDbgClock>200000</JtagDbgClock>
+          <JtagDbgClock>2000000</JtagDbgClock>
         </InterfaceProperties>
         <InterfaceName>JTAG</InterfaceName>
       </ToolOptions>
@@ -43,7 +43,7 @@
       <ToolName>AVR Dragon</ToolName>
     </com_atmel_avrdbg_tool_avrdragon>
     <avrtoolinterface>JTAG</avrtoolinterface>
-    <avrtoolinterfaceclock>200000</avrtoolinterfaceclock>
+    <avrtoolinterfaceclock>2000000</avrtoolinterfaceclock>
     <AsfFrameworkConfig>
       <framework-data xmlns="">
         <options />
@@ -163,6 +163,9 @@
       <SubType>compile</SubType>
     </Compile>
     <Compile Include="pinout.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="setupAsm.S">
       <SubType>compile</SubType>
     </Compile>
     <Compile Include="tarjetero.c">
