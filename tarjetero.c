@@ -23,7 +23,7 @@ void tarjeteroSetup() {
 
     // LED en B_L1 como salida
     DDRL |= (1 << B_L1);
-    clrBit(P_L1, B_L1);
+    PORTL &= ~(1<<PL7);
 
     // PD4 como entrada para input capture
     DDRD &= ~(1 << PD4);
@@ -140,9 +140,9 @@ uint8_t tarjetaValida(const char* tarjeta_valida) {
 
 // Funcion que verifica si la tarjeta se encuentra en la lista de usuarios
 void gestionarTarjeta() {
-    uint32_t tiempo_inicial = 0;
-    uint32_t tiempo_actual = 0;
-    uint32_t duracion_espera = 0;
+    uint32_t tiempo_inicial;
+    uint32_t tiempo_actual;
+    uint32_t duracion_espera;
     uint8_t encontrada = 0;
 
     if (!tarjetaValida(tarjeta)) {
@@ -150,12 +150,12 @@ void gestionarTarjeta() {
         do {
             tiempo_actual = millis();
             if ((tiempo_actual - tiempo_inicial) % 200 < 100) {  // Entre 200 porque es el periodo: 100 encendido y 100 apagado
-                setBit(P_L1, B_L1);                              // LED ON
+                PORTL |= (1<<PL7);                              // LED ON
             } else {
-                clrBit(P_L1, B_L1);  // LED OFF
+                PORTL &= ~(1<<PL7);  // LED OFF
             }
         } while (tiempo_actual - tiempo_inicial < 1000);
-        clrBit(P_L1, B_L1);  // Apagamos LED definitivamente
+        PORTL &= ~(1<<PL7);  // Apagamos LED definitivamente
 
     } else {
         // Comprobamos si la tarjeta esta en la lista de usuarios
@@ -176,10 +176,10 @@ void gestionarTarjeta() {
         }
 
         tiempo_inicial = millis();
-        setBit(P_L1, B_L1);  // Encendemos led
+        PORTL |= (1<<PL7);  // Encendemos led
         do {
             tiempo_actual = millis();
         } while (tiempo_actual - tiempo_inicial < duracion_espera);  // Apaga tanto si encontrada como no, varian solo los segundos
-        clrBit(P_L1, B_L1);
+        PORTL &= ~(1<<PL7);
     }
 }
