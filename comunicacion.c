@@ -1,6 +1,5 @@
 #include "comunicacion.h"
 
-
 // Configura el UART para comunicacion serial
 void uartSetup() {
     cli();  // Deshabilitar interrupciones globales
@@ -28,11 +27,10 @@ char uartReceive() {
     if ((UCSR0A & (1 << RXC0)))  // Comprueba si ha un dato
     {
         return UDR0;
+    } else {
+        return 0;
     }
-		/*while (!(UCSR0A & (1 << RXC0)));  // Esperar hasta que llegue un dato
-		return UDR0;                      // Leer dato recibido*/
 }
-
 
 void decodeData(char data) {
     switch (data) {

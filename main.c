@@ -14,6 +14,7 @@
 extern void setupAsm(void);
 
 volatile bool emergencia_flag = false;  // Bandera de emergencia
+volatile bool controller_flag = false;  // Bandera para habilitar el mando de PS3
 
 // char data='0';
 
@@ -21,23 +22,22 @@ void setup() {
     atraccionSetup();  // Configuracion inicial de la atraccion
     tarjeteroSetup();  // Configuracion inicial del tarjetero
     monederoSetup();   // Configuracion inicial del monedero
-    setupAsm();
-    uartSetup();  // Configuracion inicial del UART
+    uartSetup();       // Configuracion inicial del UART
+    setupAsm();        // Configuracion inicial en ensamblador
 }
 
 int main(void) {
     setup();
     while (1) {
-        if (!emergencia_flag) {
-            atraccion();        // Llamar a la funcion de la atraccion
-            procesarTarjeta();  // Llamar a la funcion de procesar tarjeta
-            monedero();         // Llamar a la funcion de monedero
+        if (!controller_flag) {
+            if (!emergencia_flag) {
+                atraccion();        // Llamar a la funcion de la atraccion
+                procesarTarjeta();  // Llamar a la funcion de procesar tarjeta
+                monedero();         // Llamar a la funcion de monedero
+            }
+            parpadeo();  // Llamar a la funcion de parpadeo
+        } else {
+            decodeData(uartReceive());  // Recibir dato por UART
         }
-        parpadeo();  // Llamar a la funcion de parpadeo
     }
-
-    parpadeo();                 // Llamar a la funcion de parpadeo*/
-    decodeData(uartReceive());  // Recibir dato por UART
-                                // int clau = 2;
-}
 }
