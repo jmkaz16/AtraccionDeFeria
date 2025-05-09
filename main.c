@@ -12,8 +12,8 @@
 volatile bool emergencia_flag = false;  // Bandera de emergencia
 
 void setup() {
-    atraccionSetup();  // Configuracion inicial de la atraccion
-                       // tarjeteroSetup();  // Configuracion inicial del tarjetero
+						// atraccionSetup();  // Configuracion inicial de la atraccion
+                        tarjeteroSetup();  // Configuracion inicial del tarjetero
     monederoSetup();   // Configuracion inicial del monedero
 }
 
