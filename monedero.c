@@ -143,7 +143,7 @@ void monederoSetup() {
     cli();
 
     // Configurar LEDs como salida ( "1" )
-    DDRL |= (1 << B_L2);
+    //DDRL |= (1 << B_L2);
 
     // Configurar Sensores Opticos como Entradas ( "0" )
 
