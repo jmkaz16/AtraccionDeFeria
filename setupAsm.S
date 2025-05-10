@@ -62,5 +62,24 @@ setupAsm:
 	andi r16, 0b11101111
 	sts P_L2, r16
 
+; Configuro las senales del motor M2 como salidas. EN1 en PORTL el bit 5 y BK1 en PORTL el bit 6
+	lds r16, DDRL
+	ori r16, 0b00100000
+	sts DDRK, r16
+
+	lds r16, DDRL
+	ori r16, 0b01000000
+	sts DDRL, r16
+
+; BK1 apagado inicialmente
+	lds r16, P_BK1
+	andi r16, 0b10111111
+	sts P_BK1, r16
+
+; EN1 activo constantemente
+    lds r16, P_EN1
+	ori r16, 0b00100000
+	sts P_EN1, r16
+
     sei
     ret

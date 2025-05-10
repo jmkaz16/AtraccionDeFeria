@@ -151,14 +151,14 @@ void monederoSetup() {
     DDRL &= ~(1 << B_SO3);
 
     // Configurar motores como salida
-    DDRL |= (1 << B_EN1);
-    DDRL |= (1 << B_BK1);
+    //DDRL |= (1 << B_EN1);
+    //DDRL |= (1 << B_BK1);
 
     // Activamos el ENABLE, ya que en todo el transcurso esta encendido; nunca se apaga
-    P_EN1 |= (1 << B_EN1);
+    //P_EN1 |= (1 << B_EN1);
 
     // Inicializamos a 1 el freno dinamico
-    P_BK1 |= (1 << B_BK1);
+    //P_BK1 |= (1 << B_BK1);
 
     // Configurar interrupciones PCINT
     PCICR |= (1 << PCIE0);
@@ -216,7 +216,7 @@ void monederoSetup() {
     EICRA |= (1 << ISC10);
     EIMSK |= (1 << INT1);
 
-    P_BK1 &= ~(1 << B_BK1);
+    //P_BK1 &= ~(1 << B_BK1);
 
     sei();
 }
