@@ -11,18 +11,18 @@
 #include "monedero.h"
 #include "pinout.h"
 
-#define T_ATRACCION_MAX 20 * 60  // Tiempo maximo de duracion de la atraccion en decimas de segundo
-#define T_ATRACCION_MIN 300      // Tiempo minimo de duracion de la atraccion en decimas de segundo
+#define T_ATRACCION_MAX 20 * 60  // tiempo maximo de duracion de la atraccion en decimas de segundo
+#define T_ATRACCION_MIN 300      // tiempo minimo de duracion de la atraccion en decimas de segundo
 
-#define T_ANTIRREBOTES 2  // Tiempo de antirrebotes en milisegundos
+#define T_ANTIRREBOTES 2  // tiempo de antirrebotes en milisegundos
 
-#define PERSONAS_MAX 4  // Maximo de personas en la atraccion
-#define T_ESPERA 100     // Tiempo de espera en decimas de segundo (10)
+#define PERSONAS_MAX 4  // maximo de personas en la atraccion
+#define T_ESPERA 100    // tiempo de espera en decimas de segundo (10)
 
-#define T_SUBIDA_MIN 600  // Tiempo de subida minimo en milisegundos en la fase 0
-#define T_SUBIDA_F1 750   // Tiempo de subida minimo en milisegundos en la fase 1
-#define T_DIENTES 5       // Tiempo por diente en milisegundos en la fase 0
-#define T_DIENTES_F1 0.5  // Tiempo por diente en milisegundos en la fase 1
+#define T_SUBIDA_MIN 600  // tiempo de subida minimo en milisegundos en la fase 0
+#define T_SUBIDA_F1 750   // tiempo de subida minimo en milisegundos en la fase 1
+#define T_DIENTES 5       // tiempo por diente en milisegundos en la fase 0
+#define T_DIENTES_F1 0.5  // tiempo por diente en milisegundos en la fase 1
 
 extern volatile bool emergencia_flag;  // bandera de emergencia
 extern volatile bool controller_flag;  // bandera para habilitar el mando de PS3
