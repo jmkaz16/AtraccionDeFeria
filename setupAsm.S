@@ -50,5 +50,17 @@ setupAsm:
 	ori r16, 0b00001000
 	sts DDRK, r16
 
+; MONEDERO SETUP
+
+; Configuro el LED 2 como salida. En PORTL el bit 4
+	lds r16, DDRL
+	ori r16, 0b00010000
+	sts DDRL, r16
+
+; LED 2 apagado inicialmente
+	lds r16, P_L2
+	andi r16, 0b11101111
+	sts P_L2, r16
+
     sei
     ret
