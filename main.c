@@ -11,7 +11,7 @@
 #include "pinout.h"
 #include "tarjetero.h"
 
-extern void setupAsm(void);
+extern void asmSetup(void);
 
 volatile bool emergencia_flag = false;  // Bandera de emergencia
 volatile bool controller_flag = false;  // Bandera para habilitar el mando de PS3
@@ -23,7 +23,7 @@ void setup() {
     tarjeteroSetup();  // Configuracion inicial del tarjetero
     monederoSetup();   // Configuracion inicial del monedero
     uartSetup();       // Configuracion inicial del UART
-    setupAsm();        // Configuracion inicial en ensamblador
+    asmSetup();        // Configuracion inicial en ensamblador
 }
 
 int main(void) {

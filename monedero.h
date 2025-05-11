@@ -26,7 +26,7 @@ extern volatile uint8_t personas_cnt;
 
 void monederoSetup();
 void monedero();
-void clearMonedero();
+void clrMonedero();
 
 ISR(INT1_vect);
 

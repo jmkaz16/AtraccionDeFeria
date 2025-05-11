@@ -181,10 +181,10 @@ void parpadeo() {
 
 // ISR del pulsador de emergencia SW1 (INT0)
 ISR(INT0_vect) {
-    clrAtraccion();
+    clrAtraccion();                                          // desactivar atraccion
+    clrMonedero();                                           // desactivar monedero
     setParpadeo(200, 1000);                                  // encender 200ms y apagar 1000ms
     EIMSK &= ~((1 << B_SO4) | (1 << B_SO5) | (1 << B_SW1));  // deshabilitar mascara de interrupcion por sensores opticos y mecanico
-    clrAtraccion();                                          // desactiva la atraccion
     emergencia_flag = true;                                  // activar bandera de emergencia
 }
 
