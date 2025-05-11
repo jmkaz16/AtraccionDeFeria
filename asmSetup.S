@@ -1,10 +1,10 @@
-.global setupAsm
+.global asmSetup
 
 #include <avr/io.h>
 #include "pinout.h"
 
 
-setupAsm:
+asmSetup:
     cli
 
 ; TARJETERO SETUP
