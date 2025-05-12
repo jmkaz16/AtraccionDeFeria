@@ -65,7 +65,7 @@ asmSetup:
 ; Configuro las senales del motor M2 como salidas. EN1 en PORTL el bit 5 y BK1 en PORTL el bit 6
 	lds r16, DDRL
 	ori r16, 0b00100000
-	sts DDRK, r16
+	sts DDRL, r16
 
 	lds r16, DDRL
 	ori r16, 0b01000000

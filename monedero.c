@@ -136,6 +136,7 @@ void monedero() {
         bandera_SW2 = 0;
         tiempo_referencia_abierto_SW2 = millis();
     }
+	
 }
 
 void monederoSetup() {
@@ -149,26 +150,11 @@ void monederoSetup() {
 
     DDRL &= ~(1 << B_SO2);
     DDRL &= ~(1 << B_SO3);
-
-    // Configurar motores como salida
-    // DDRL |= (1 << B_EN1);
-    // DDRL |= (1 << B_BK1);
-
-    // Activamos el ENABLE, ya que en todo el transcurso esta encendido; nunca se apaga
-    // P_EN1 |= (1 << B_EN1);
-
-    // Inicializamos a 1 el freno dinamico
-    // P_BK1 |= (1 << B_BK1);
-
+	
     // Configurar interrupciones PCINT
     PCICR |= (1 << PCIE0);
 
-    // Habilitar mascaras sensores opticos
-    PCMSK0 |= (1 << PCINT2);  // PCMSK0 |= (1 << B_SO2); // B_SO2 o PCINT2? o da igual?
-    PCMSK0 |= (1 << PCINT3);  // PCMSK0 |= (1 << B_SO3); // PCINT3?
-
     // Configurar interrupcion INT1 (flanco de subida)
-    // EICRA |= (1 << 2*B_SW2) | (1 << (2*B_SW2+1))	;			// CONFIRMAR PRIMERO!!!
     EICRA &= ~(1 << 2 * 1);
     EICRA |= (1 << (2 * 1 + 1));
 
@@ -215,8 +201,6 @@ void monederoSetup() {
     EICRA |= (1 << ISC11);
     EICRA |= (1 << ISC10);
     EIMSK |= (1 << INT1);
-
-    // P_BK1 &= ~(1 << B_BK1);
 
     sei();
 }
