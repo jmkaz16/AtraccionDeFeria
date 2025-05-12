@@ -35,7 +35,8 @@ int main(void) {
                 procesarTarjeta();  // Llamar a la funcion de procesar tarjeta
                 monedero();         // Llamar a la funcion de monedero
             }
-            parpadeo();  // Llamar a la funcion de parpadeo
+            parpadeo();       // Llamar a la funcion de parpadeo
+            actualizarLED();  // LLamar a la funcion de actualizar LED
         } else {
             decodeData(uartReceive());  // Recibir dato por UART
         }

@@ -25,5 +25,6 @@ void procesarTarjeta();                                              // funcion 
 void conversorBits2Numero(volatile uint8_t* vector, char* tarjeta);  // funcion que convierte los bits de vector bit en la cadena de caracteres
 uint8_t tarjetaValida(const char* tarjeta_valida);                   // funcion que verifica si la tarjeta es valida
 void gestionarTarjeta();                                             // funcion que gestiona la tarjeta leida y la compara con la lista de usuarios
+void actualizarLED();												 // funcion que se llama periodicamente en el main y que gestiona el estado del led: apagado, encendido o parpadeando
 
 #endif  // TARJETERO_H
