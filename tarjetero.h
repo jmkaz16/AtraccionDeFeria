@@ -11,7 +11,7 @@
 #define NUM_TIEMPOS 54    // numero de flancos a leer en la tarjeta
 #define NUM_BITS 24       // numero de bits en la tarjeta
 #define NUM_CARACTERES 6  // numero de caracteres en la tarjeta
-#define MAX_TARJETAS 10   // numero maximo de tarjetas a guardar
+#define MAX_TARJETAS 20   // numero maximo de tarjetas a guardar
 #define INDEX_TABLA 16    // numero de caracteres en la tabla de codigos
 
 extern volatile uint8_t personas_cnt;
@@ -26,5 +26,6 @@ void conversorBits2Numero(volatile uint8_t* vector, char* tarjeta);  // funcion 
 uint8_t tarjetaValida(const char* tarjeta_valida);                   // funcion que verifica si la tarjeta es valida
 void gestionarTarjeta();                                             // funcion que gestiona la tarjeta leida y la compara con la lista de usuarios
 void actualizarLED();												 // funcion que se llama periodicamente en el main y que gestiona el estado del led: apagado, encendido o parpadeando
-
+uint8_t compararTarjetas(const char* t1, const char* t2);										
+void copiarTarjeta(char* destino, const char* origen);
 #endif  // TARJETERO_H
