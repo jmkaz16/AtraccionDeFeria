@@ -22,7 +22,7 @@ void uartSetup() {
     sei();  // Habilitar interrupciones globales
 }
 
-// Funcion bloqueante para recibir un caracter por UART
+// Funcion que comprueba si hay un dato disponible en el buffer de recepcion
 char uartReceive() {
     if ((UCSR0A & (1 << RXC0)))  // Comprueba si ha un dato
     {
