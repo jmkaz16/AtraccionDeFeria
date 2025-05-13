@@ -26,6 +26,6 @@ void conversorBits2Numero(volatile uint8_t* vector, char* tarjeta);  // funcion 
 uint8_t tarjetaValida(const char* tarjeta_valida);                   // funcion que verifica si la tarjeta es valida
 void gestionarTarjeta();                                             // funcion que gestiona la tarjeta leida y la compara con la lista de usuarios
 void actualizarLED();												 // funcion que se llama periodicamente en el main y que gestiona el estado del led: apagado, encendido o parpadeando
-uint8_t compararTarjetas(const char* t1, const char* t2);										
-void copiarTarjeta(char* destino, const char* origen);
+uint8_t compararTarjetas(const char* t1, const char* t2);			 // funcion que recorre el vector de usuarios para ver si la nueva tarjeta esta ya registrada o no							
+void copiarTarjeta(char* destino, const char* origen);				 // funcion que copia la nueva tarjeta en el vector usuarios porque es nueva
 #endif  // TARJETERO_H
